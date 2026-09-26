@@ -10,7 +10,11 @@ class SecurityDatabase:
     """Embedded SQLite persistence engine for Aegis-X events, scans, and audit trails."""
 
     def __init__(self, db_path: str = "aegis_telemetry.db"):
-        self.db_path = db_path
+        import os
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or not os.access(".", os.W_OK):
+            self.db_path = "/tmp/aegis_telemetry.db"
+        else:
+            self.db_path = db_path
         self._init_tables()
 
     def _get_conn(self) -> sqlite3.Connection:
