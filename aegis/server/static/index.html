@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS-X // Autonomous EDR & Cyber Defense SOC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <!-- Local Vis.js standalone bundle -->
+  <script type="text/javascript" src="/static/vis-network.min.js"></script>
+</head>
+<body class="cyber-theme">
+  <!-- Top Command Header -->
+  <header class="soc-header">
+    <div class="brand-zone">
+      <div class="logo-radar">
+        <div class="radar-sweep"></div>
+        <span class="shield-glyph">🛡️</span>
+      </div>
+      <div>
+        <div class="brand-title">AEGIS<span class="accent-x">-X</span></div>
+        <div class="brand-sub">AUTONOMOUS ENDPOINT DETECTION & CORRELATION PLATFORM</div>
+      </div>
+    </div>
+
+    <!-- Live Status Dial -->
+    <div class="header-posture">
+      <div class="score-circle-wrap">
+        <svg class="score-ring" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+          <circle id="scoreRingProgress" class="ring-val" cx="50" cy="50" r="42"></circle>
+        </svg>
+        <div class="score-value" id="overallScoreVal">--</div>
+      </div>
+      <div class="posture-info">
+        <div class="posture-label">CYBER POSTURE RATING</div>
+        <div id="postureTierBadge" class="posture-badge">SCANNING...</div>
+      </div>
+    </div>
+
+    <!-- Quick Action Controls -->
+    <div class="header-controls">
+      <button id="btnLiveScan" class="cyber-btn primary">
+        <span class="btn-icon">⚡</span> RUN LIVE OS SCAN
+      </button>
+      <div class="dropdown">
+        <button id="btnSimulateDropdown" class="cyber-btn secondary">
+          <span class="btn-icon">☣️</span> SIMULATE ADVERSARY ▾
+        </button>
+        <div class="dropdown-menu" id="simMenu">
+          <div class="dropdown-item" onclick="triggerScenario('all_threats')">🔴 Multi-Vector Attack (All Threats)</div>
+          <div class="dropdown-item" onclick="triggerScenario('apt29_covert_c2')">🌐 APT-29 C2 Beacon & Persistence</div>
+          <div class="dropdown-item" onclick="triggerScenario('blackcat_ransomware')">🔒 BlackCat Ransomware Cryptor</div>
+          <div class="dropdown-item" onclick="triggerScenario('reverse_shell_rce')">🐚 Remote Interactive Reverse Shell</div>
+          <div class="dropdown-item" onclick="triggerScenario('pegasus_spyware')">👁️ Covert Surveillance & Screen Grab</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item green" onclick="triggerScenario('enterprise_baseline')">🟢 Enterprise Benign Baseline (100%)</div>
+        </div>
+      </div>
+      <button id="btnEmergencyContain" class="cyber-btn danger" onclick="containAllThreats()">
+        <span class="btn-icon">🚨</span> CONTAIN ALL THREATS
+      </button>
+    </div>
+  </header>
+
+  <!-- Metric Badges Row -->
+  <section class="metrics-bar">
+    <div class="metric-card">
+      <div class="metric-title">CORRELATED INCIDENTS</div>
+      <div class="metric-num text-danger" id="metricIncidentCount">0</div>
+      <div class="metric-meta">Multi-signal correlated threats</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">ENTITIES PROFILED</div>
+      <div class="metric-num text-cyan" id="metricEntityCount">0</div>
+      <div class="metric-meta">Processes, Sockets, LaunchAgents</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">TELEMETRY SIGNALS</div>
+      <div class="metric-num text-emerald" id="metricSignalCount">0</div>
+      <div class="metric-meta">Atomic security observations</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">SOAR CONTAINMENTS</div>
+      <div class="metric-num text-amber" id="metricContainCount">0</div>
+      <div class="metric-meta">Active isolated targets</div>
+    </div>
+  </section>
+
+  <!-- Main Navigation Tabs -->
+  <nav class="soc-nav">
+    <button class="nav-tab active" data-tab="tab-graph" id="navTabGraph">
+      <span class="tab-icon">🕸️</span> ATTACK GRAPH & LINEAGE
+    </button>
+    <button class="nav-tab" data-tab="tab-incidents" id="navTabIncidents">
+      <span class="tab-icon">🚨</span> INCIDENT QUEUE <span id="incidentBadgeCount" class="counter-badge">0</span>
+    </button>
+    <button class="nav-tab" data-tab="tab-mitre" id="navTabMitre">
+      <span class="tab-icon">🎯</span> MITRE ATT&CK® MATRIX
+    </button>
+    <button class="nav-tab" data-tab="tab-audit" id="navTabAudit">
+      <span class="tab-icon">📜</span> FORENSIC AUDIT TRAIL
+    </button>
+  </nav>
+
+  <!-- Tab Content Sections -->
+  <main class="soc-body">
+    <!-- TAB 1: VISUAL ATTACK GRAPH -->
+    <div id="tab-graph" class="tab-pane active">
+      <div class="graph-layout">
+        <div class="graph-viewport-box">
+          <div class="graph-toolbar">
+            <div class="legend-items">
+              <span class="legend-tag critical">CRITICAL / EXPLOIT</span>
+              <span class="legend-tag high">HIGH RISK</span>
+              <span class="legend-tag medium">MEDIUM ATTENTION</span>
+              <span class="legend-tag benign">BENIGN / VERIFIED</span>
+            </div>
+            <div class="graph-actions">
+              <button class="btn-micro" onclick="resetGraphPhysics()">Stabilize Layout</button>
+              <button class="btn-micro" onclick="fitGraphView()">Fit View</button>
+            </div>
+          </div>
+          <div id="visNetworkContainer" class="vis-container"></div>
+        </div>
+
+        <!-- Sidebar Node Forensic Inspector -->
+        <aside class="node-inspector" id="nodeInspector">
+          <div class="inspector-header">
+            <span class="inspector-title">FORENSIC ENTITY INSPECTOR</span>
+            <span class="pulse-indicator">LIVE</span>
+          </div>
+          <div id="inspectorContent" class="inspector-body">
+            <div class="empty-hint">Select any node in the Attack Graph to inspect live process lineage, socket bindings, and raw telemetry signals.</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- TAB 2: INCIDENT QUEUE -->
+    <div id="tab-incidents" class="tab-pane">
+      <div class="incidents-container" id="incidentsList">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- TAB 3: MITRE ATT&CK MATRIX -->
+    <div id="tab-mitre" class="tab-pane">
+      <div class="mitre-header-info">
+        <h3>MITRE ATT&CK Enterprise Matrix Alignment</h3>
+        <p>Real-time correlation of detected behavioral telemetry mapped against global adversary Tactics and Techniques.</p>
+      </div>
+      <div class="mitre-grid" id="mitreGrid">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- TAB 4: AUDIT TRAIL -->
+    <div id="tab-audit" class="tab-pane">
+      <div class="audit-terminal-card">
+        <div class="terminal-bar">
+          <div class="terminal-dots"><span></span><span></span><span></span></div>
+          <div class="terminal-title">AEGIS-X SOAR RESPONDER AUDIT LEDGER</div>
+          <button class="btn-micro" onclick="loadAuditLogs()">Refresh Ledger</button>
+        </div>
+        <div class="terminal-output" id="auditOutput">
+          <div class="log-line text-muted">// Initializing audit stream...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Containment Success Modal -->
+  <div id="containmentModal" class="cyber-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title">⚡ SOAR CONTAINMENT DIRECTIVE EXECUTED</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalContent"></div>
+      <div class="modal-footer">
+        <button class="cyber-btn primary" onclick="closeModal()">ACKNOWLEDGE & DISMISS</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  aegis-edr:
+    build: .
+    container_name: aegis-edr-soc
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    environment:
+      - ENVIRONMENT=production
