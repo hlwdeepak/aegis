@@ -1,4 +1,4 @@
-// Aegis-X Frontend Orchestrator
+// Aegis-X Enterprise EDR Orchestrator
 
 let networkInstance = null;
 let currentGraphData = { nodes: [], edges: [] };
@@ -9,13 +9,15 @@ let ws = null;
 document.addEventListener("DOMContentLoaded", () => {
   initLiveClock();
   initTabs();
-  initDropdown();
   initWebSocket();
   fetchStatusAndData();
 
-  document.getElementById("btnLiveScan").addEventListener("click", () => {
-    runScan("live");
-  });
+  const scanBtn = document.getElementById("btnLiveScan");
+  if (scanBtn) {
+    scanBtn.addEventListener("click", () => {
+      runScan("live");
+    });
+  }
 
   let resizeTimer;
   window.addEventListener("resize", () => {
@@ -24,11 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (networkInstance) {
         networkInstance.fit();
       }
-    }, 250);
+    }, 200);
   });
 });
 
-// Live SOC UTC Clock
+// Live UTC Clock
 function initLiveClock() {
   const clockElem = document.getElementById("socClock");
   if (!clockElem) return;
@@ -43,20 +45,20 @@ function initLiveClock() {
 
 // Tab Switcher
 function initTabs() {
-  const tabs = document.querySelectorAll(".nav-tab");
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      tabs.forEach(t => t.classList.remove("active"));
-      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+  const tabButtons = document.querySelectorAll(".nav-link[data-tab]");
+  tabButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabButtons.forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("active"));
 
-      tab.classList.add("active");
-      const target = document.getElementById(tab.dataset.tab);
+      btn.classList.add("active");
+      const target = document.getElementById(btn.dataset.tab);
       if (target) {
         target.classList.add("active");
-        if (tab.dataset.tab === "tab-graph" && networkInstance) {
-          setTimeout(() => { networkInstance.fit(); }, 120);
+        if (btn.dataset.tab === "tab-graph" && networkInstance) {
+          setTimeout(() => { networkInstance.fit(); }, 100);
         }
-        if (tab.dataset.tab === "tab-audit") {
+        if (btn.dataset.tab === "tab-audit") {
           loadAuditLogs();
         }
       }
@@ -64,22 +66,7 @@ function initTabs() {
   });
 }
 
-// Dropdown simulation menu
-function initDropdown() {
-  const btn = document.getElementById("btnSimulateDropdown");
-  const dropdown = btn.parentElement;
-
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle("open");
-  });
-
-  document.addEventListener("click", () => {
-    dropdown.classList.remove("open");
-  });
-}
-
-// WebSocket Live Telemetry
+// WebSocket Live Telemetry Stream
 function initWebSocket() {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const wsUrl = `${protocol}//${window.location.host}/ws/telemetry`;
@@ -87,7 +74,7 @@ function initWebSocket() {
   try {
     ws = new WebSocket(wsUrl);
     ws.onopen = () => {
-      appendAuditLine("system", "🟢 Telemetry WebSocket stream connected.");
+      appendAuditLine("system", "Telemetry WebSocket stream connected to host agent.");
     };
     ws.onmessage = (event) => {
       try {
@@ -98,7 +85,7 @@ function initWebSocket() {
       }
     };
     ws.onclose = () => {
-      appendAuditLine("system", "⚠️ WebSocket disconnected. Retrying in 5s...");
+      appendAuditLine("system", "WebSocket disconnected. Reconnecting in 5s...");
       setTimeout(initWebSocket, 5000);
     };
   } catch (e) {
@@ -108,13 +95,13 @@ function initWebSocket() {
 
 function handleStreamEvent(data) {
   if (data.type === "SCAN_COMPLETED") {
-    appendAuditLine("scan", `⚡ Scan completed. Score: ${data.score}/100 | Active Incidents: ${data.incidents}`);
+    appendAuditLine("scan", `Host scan finished. Security Score: ${data.score}/100 | Active Incidents: ${data.incidents}`);
     fetchStatusAndData();
   } else if (data.type === "INCIDENT_CONTAINED") {
-    appendAuditLine("contain", `🚨 Containment directive executed for ${data.incident_id}`);
+    appendAuditLine("contain", `SOAR Containment directive executed for ${data.incident_id}`);
     fetchStatusAndData();
   } else if (data.type === "ATTACK_SIMULATED") {
-    appendAuditLine("sim", `☣️ Adversary scenario '${data.scenario}' injected. Detected ${data.incidents} threats.`);
+    appendAuditLine("sim", `Adversary scenario '${data.scenario}' simulated. Detected ${data.incidents} threats.`);
     fetchStatusAndData();
   }
 }
@@ -151,28 +138,27 @@ function updatePostureMetrics(metrics) {
   const score = metrics.score;
   scoreVal.textContent = score;
 
-  // Circle dash calculations: radius = 42 -> circumference = 2 * PI * 42 ~= 263.89
-  const circumference = 264;
+  const circumference = 251.3;
   const offset = circumference - (score / 100) * circumference;
   scoreRing.style.strokeDashoffset = offset;
 
   if (score >= 80) {
-    scoreRing.style.stroke = "url(#scoreGradEmerald)";
-    scoreRing.style.filter = "drop-shadow(0 0 8px rgba(16, 185, 129, 0.7))";
+    scoreRing.style.stroke = "#10b981";
+    tierBadge.className = "fw-bold fs-6 text-success";
   } else if (score >= 50) {
-    scoreRing.style.stroke = "url(#scoreGradAmber)";
-    scoreRing.style.filter = "drop-shadow(0 0 8px rgba(245, 158, 11, 0.7))";
+    scoreRing.style.stroke = "#f59e0b";
+    tierBadge.className = "fw-bold fs-6 text-warning";
   } else {
-    scoreRing.style.stroke = "url(#scoreGradRose)";
-    scoreRing.style.filter = "drop-shadow(0 0 8px rgba(255, 0, 85, 0.7))";
+    scoreRing.style.stroke = "#ef4444";
+    tierBadge.className = "fw-bold fs-6 text-danger";
   }
 
   tierBadge.textContent = metrics.posture_tier;
-  tierBadge.style.color = metrics.tier_color;
 
   document.getElementById("metricIncidentCount").textContent = metrics.incident_count;
   document.getElementById("metricEntityCount").textContent = metrics.entity_count;
   document.getElementById("metricSignalCount").textContent = metrics.total_signals;
+  document.getElementById("metricContainCount").textContent = metrics.active_containments || 0;
   document.getElementById("incidentBadgeCount").textContent = metrics.incident_count;
 }
 
@@ -183,69 +169,50 @@ function renderVisGraph(graphData) {
   if (!container) return;
 
   if (typeof vis === "undefined") {
-    console.error("Vis.js library is not loaded yet.");
-    container.innerHTML = "<div style='color: var(--text-dim); text-align: center; padding: 40px;'>Loading Attack Graph Visualizer...</div>";
+    container.innerHTML = "<div class='text-secondary text-center p-5'>Loading Attack Graph Visualizer...</div>";
     return;
   }
 
   const styledNodes = (graphData.nodes || []).map(n => {
-    let border = "#38bdf8";
-    let bg = "rgba(15, 23, 42, 0.85)";
-    let highlight = "#00f0ff";
-    let glow = "rgba(56, 189, 248, 0.4)";
+    let border = "#3b82f6";
+    let bg = "#1e293b";
+    let highlight = "#60a5fa";
 
     if (n.severity === "critical") {
-      border = "#ff0055";
-      bg = "rgba(255, 0, 85, 0.25)";
-      highlight = "#ff3366";
-      glow = "rgba(255, 0, 85, 0.6)";
+      border = "#ef4444";
+      bg = "#450a0a";
+      highlight = "#f87171";
     } else if (n.severity === "high") {
       border = "#f59e0b";
-      bg = "rgba(245, 158, 11, 0.25)";
+      bg = "#451a03";
       highlight = "#fbbf24";
-      glow = "rgba(245, 158, 11, 0.6)";
     } else if (n.severity === "medium") {
-      border = "#00f0ff";
-      bg = "rgba(0, 240, 255, 0.2)";
+      border = "#0ea5e9";
+      bg = "#082f49";
       highlight = "#38bdf8";
-      glow = "rgba(0, 240, 255, 0.5)";
     } else {
       border = "#10b981";
-      bg = "rgba(16, 185, 129, 0.2)";
+      bg = "#064e3b";
       highlight = "#34d399";
-      glow = "rgba(16, 185, 129, 0.5)";
     }
 
     return {
       ...n,
       shape: "box",
       margin: 10,
-      borderWidth: 2,
-      borderWidthSelected: 3,
+      borderWidth: 1.5,
+      borderWidthSelected: 2.5,
       color: {
         border: border,
         background: bg,
-        highlight: {
-          border: highlight,
-          background: bg,
-        },
-        hover: {
-          border: "#ffffff",
-          background: bg,
-        }
+        highlight: { border: highlight, background: bg },
+        hover: { border: "#ffffff", background: bg }
       },
       font: {
         face: "Inter, sans-serif",
         size: 11,
         color: "#ffffff",
         multi: true
-      },
-      shadow: {
-        enabled: true,
-        color: glow,
-        size: 10,
-        x: 0,
-        y: 0
       }
     };
   });
@@ -253,12 +220,12 @@ function renderVisGraph(graphData) {
   const styledEdges = (graphData.edges || []).map(e => ({
     ...e,
     color: {
-      color: "rgba(56, 189, 248, 0.35)",
-      highlight: "#00f0ff",
+      color: "rgba(148, 163, 184, 0.4)",
+      highlight: "#3b82f6",
       hover: "#ffffff"
     },
-    arrows: { to: { enabled: true, scaleFactor: 0.6 } },
-    font: { face: "Fira Code", size: 9, color: "#94a3b8", align: "middle" }
+    arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+    font: { face: "JetBrains Mono, monospace", size: 9, color: "#94a3b8", align: "middle" }
   }));
 
   const data = {
@@ -269,7 +236,7 @@ function renderVisGraph(graphData) {
   const options = {
     nodes: {
       shape: "box",
-      margin: 10,
+      margin: 8,
     },
     edges: {
       width: 1.5,
@@ -278,9 +245,9 @@ function renderVisGraph(graphData) {
     physics: {
       solver: "forceAtlas2Based",
       forceAtlas2Based: {
-        gravitationalConstant: -70,
+        gravitationalConstant: -60,
         centralGravity: 0.015,
-        springLength: 130,
+        springLength: 120,
         springConstant: 0.08,
         damping: 0.4,
       },
@@ -326,7 +293,7 @@ function resetGraphPhysics() {
 
 function fitGraphView() {
   if (networkInstance) {
-    networkInstance.fit({ animation: { duration: 600, easingFunction: "easeInOutQuad" } });
+    networkInstance.fit({ animation: { duration: 500, easingFunction: "easeInOutQuad" } });
   }
 }
 
@@ -338,52 +305,60 @@ function inspectNode(nodeKey) {
 
   const associatedIncidents = activeIncidents.filter(inc => inc.entity && inc.entity.key === nodeKey);
 
+  let severityBadgeClass = "text-bg-secondary";
+  if (node.severity === "critical") severityBadgeClass = "text-bg-danger-subtle text-danger border border-danger-subtle";
+  else if (node.severity === "high") severityBadgeClass = "text-bg-warning-subtle text-warning border border-warning-subtle";
+  else if (node.severity === "medium") severityBadgeClass = "text-bg-info-subtle text-info border border-info-subtle";
+  else if (node.severity === "benign") severityBadgeClass = "text-bg-success-subtle text-success border border-success-subtle";
+
   let html = `
-    <div style="margin-bottom: 16px;">
-      <div style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 4px; font-family: var(--font-tech);">${node.label.split('\n')[0]}</div>
-      <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); word-break: break-all;">${node.id}</div>
+    <div class="mb-3">
+      <h6 class="fw-bold text-white mb-1 font-heading">${node.label.split('\n')[0]}</h6>
+      <code class="small text-secondary font-mono d-block text-break">${node.id}</code>
     </div>
 
-    <div style="background: rgba(0,0,0,0.35); padding: 14px; border-radius: var(--radius-md); margin-bottom: 16px; border: 1px solid var(--border-subtle);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="color: var(--text-muted); font-size: 11px;">Threat Severity:</span>
-        <span class="severity-pill ${node.severity}">${node.severity.toUpperCase()}</span>
+    <div class="bg-body-secondary p-3 rounded border mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-secondary small">Severity:</span>
+        <span class="badge ${severityBadgeClass}">${node.severity.toUpperCase()}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="color: var(--text-muted); font-size: 11px;">Entity Category:</span>
-        <span style="color: var(--neon-cyan); text-transform: uppercase; font-family: var(--font-mono); font-size: 11px;">${node.entity_type}</span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-secondary small">Category:</span>
+        <span class="font-mono text-primary small text-uppercase fw-semibold">${node.entity_type}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="color: var(--text-muted); font-size: 11px;">Attached Signals:</span>
-        <span style="font-weight: 700; color: #fff; font-family: var(--font-mono);">${node.signal_count}</span>
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="text-secondary small">Signals:</span>
+        <span class="font-mono text-white fw-bold small">${node.signal_count}</span>
       </div>
     </div>
   `;
 
   if (associatedIncidents.length > 0) {
-    html += `<div style="font-family: var(--font-display); font-size: 11px; margin-bottom: 10px; color: var(--neon-rose); letter-spacing: 0.8px;">CORRELATED THREAT INCIDENTS</div>`;
+    html += `<div class="small fw-bold text-danger text-uppercase font-mono mb-2">Correlated Incidents</div>`;
     associatedIncidents.forEach(inc => {
       html += `
-        <div style="background: rgba(255,0,85,0.08); border: 1px solid rgba(255,0,85,0.35); border-radius: var(--radius-md); padding: 12px; margin-bottom: 10px;">
-          <div style="font-weight: 700; color: #fff; margin-bottom: 4px; font-size: 13px;">${inc.title}</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.5;">${inc.explanation}</div>
-          <button class="cyber-btn danger" style="padding: 7px 12px; font-size: 11px; width: 100%; justify-content: center;" onclick="executeContainment('${inc.incident_id}')">
-            ⚡ EXECUTE SOAR ISOLATION
+        <div class="card bg-danger-subtle border-danger-subtle p-3 mb-2">
+          <div class="fw-semibold text-danger mb-1 small">${inc.title}</div>
+          <div class="text-secondary small mb-2 lh-sm">${inc.explanation}</div>
+          <button class="btn btn-sm btn-danger d-inline-flex align-items-center justify-content-center gap-1 w-100" onclick="executeContainment('${inc.incident_id}')">
+            <i class="bi bi-shield-slash"></i>
+            <span>Execute SOAR Isolation</span>
           </button>
         </div>
       `;
     });
   } else {
     html += `
-      <div style="color: var(--neon-emerald); font-size: 12px; background: rgba(16,185,129,0.1); padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(16,185,129,0.3);">
-        ✓ No active multi-signal correlated threats for this node.
+      <div class="alert alert-success d-flex align-items-center gap-2 p-2 small m-0" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>No multi-signal threats correlated for this node.</span>
       </div>
     `;
   }
 
   inspector.innerHTML = html;
 
-  if (window.innerWidth <= 1024) {
+  if (window.innerWidth <= 992) {
     const inspectorElem = document.getElementById("nodeInspector");
     if (inspectorElem) {
       inspectorElem.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -393,10 +368,10 @@ function inspectNode(nodeKey) {
 
 function clearInspector() {
   document.getElementById("inspectorContent").innerHTML = `
-    <div class="empty-hint">
-      <div class="empty-hint-icon">🔍</div>
-      <div class="empty-hint-title">No Entity Selected</div>
-      <div class="empty-hint-sub">Select any node on the Attack Graph to inspect live process lineage, socket bindings, and raw telemetry signals.</div>
+    <div class="text-center py-5 text-secondary">
+      <i class="bi bi-search fs-2 mb-2 d-block opacity-50"></i>
+      <h6 class="fw-semibold text-white mb-1">No Entity Selected</h6>
+      <p class="small opacity-75 m-0">Click any process, socket, or persistence node in the attack graph to inspect telemetry.</p>
     </div>
   `;
 }
@@ -406,10 +381,10 @@ function renderIncidents(incidents) {
   const container = document.getElementById("incidentsList");
   if (!incidents || incidents.length === 0) {
     container.innerHTML = `
-      <div style="text-align: center; padding: 60px 20px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
-        <div style="font-size: 36px; margin-bottom: 12px;">🛡️</div>
-        <div style="font-family: var(--font-display); font-size: 16px; color: var(--neon-emerald); margin-bottom: 6px;">ZERO CORRELATED THREATS</div>
-        <div style="color: var(--text-muted); font-size: 13px;">All monitored endpoint behaviors comply with benign baselines.</div>
+      <div class="card p-5 text-center bg-dark border">
+        <div class="fs-1 text-success mb-2"><i class="bi bi-shield-check"></i></div>
+        <h5 class="fw-bold text-white mb-1">Zero Correlated Threats</h5>
+        <p class="text-secondary small mb-0">All monitored endpoint activity complies with verified baseline policies.</p>
       </div>
     `;
     return;
@@ -417,50 +392,59 @@ function renderIncidents(incidents) {
 
   container.innerHTML = incidents.map(inc => {
     const isContained = inc.status === "CONTAINED_ISOLATED";
+    const sevClass = inc.severity === "critical" ? "critical" : (inc.severity === "high" ? "high" : "medium");
+
+    let badgeClass = "text-bg-info-subtle text-info border border-info-subtle";
+    if (inc.severity === "critical") badgeClass = "text-bg-danger-subtle text-danger border border-danger-subtle";
+    else if (inc.severity === "high") badgeClass = "text-bg-warning-subtle text-warning border border-warning-subtle";
+
     return `
-      <div class="incident-card ${inc.severity} ${isContained ? 'contained' : ''}">
-        <div class="incident-top">
-          <div class="incident-title-block">
-            <span class="severity-pill ${inc.severity}">${inc.severity}</span>
-            <div class="incident-title">${inc.title}</div>
+      <div class="incident-card ${sevClass}">
+        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge ${badgeClass} text-uppercase font-mono">${inc.severity}</span>
+            <h6 class="fw-bold text-white mb-0 font-heading fs-6">${inc.title}</h6>
           </div>
-          <span class="incident-status-tag ${isContained ? 'contained' : 'open'}">
-            ${isContained ? '✓ CONTAINED & ISOLATED' : '🚨 ACTIVE THREAT'}
+          <span class="badge ${isContained ? 'text-bg-success-subtle text-success border border-success-subtle' : 'text-bg-danger-subtle text-danger border border-danger-subtle'}">
+            ${isContained ? '✓ Contained & Isolated' : '● Active Threat'}
           </span>
         </div>
 
-        <div class="incident-plain-english">
-          <div class="plain-english-header">
-            <span class="plain-english-badge">💬 WHAT THIS MEANS IN SIMPLE TERMS</span>
+        <div class="plain-english-box mb-3">
+          <div class="plain-english-badge mb-1">
+            <i class="bi bi-chat-left-text-fill me-1"></i> Executive Briefing
           </div>
           <div class="plain-english-text">${inc.plain_english_summary || inc.explanation}</div>
         </div>
 
-        <div class="incident-precautions">
-          <div class="precautions-header">🛡️ NECESSARY PRECAUTIONS TO TAKE:</div>
-          <ul class="precautions-list">
+        <div class="precautions-box mb-3">
+          <div class="precautions-header">
+            <i class="bi bi-shield-fill-check"></i> Recommended Countermeasures:
+          </div>
+          <ul>
             ${(inc.user_precautions && inc.user_precautions.length > 0 ? inc.user_precautions : [inc.remediation]).map(p => `<li>${p}</li>`).join('')}
           </ul>
         </div>
 
-        <div class="incident-tech-accordion">
-          <div class="tech-detail-label">⚙️ Technical Detection Analysis: <span>${inc.explanation}</span></div>
+        <div class="tech-details-box text-secondary font-mono mb-3">
+          <span class="text-white fw-semibold">Technical Signature:</span> ${inc.explanation}
         </div>
 
-        <div class="incident-tags">
-          ${(inc.mitre_tactics || []).map(t => `<span class="mitre-badge">🎯 ${t}</span>`).join('')}
-          ${(inc.mitre_techniques || []).map(t => `<span class="mitre-badge" style="border-color: #38bdf8; color: #38bdf8;">⚙️ ${t}</span>`).join('')}
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          ${(inc.mitre_tactics || []).map(t => `<span class="mitre-pill"><i class="bi bi-bullseye me-1"></i>${t}</span>`).join('')}
+          ${(inc.mitre_techniques || []).map(t => `<span class="mitre-pill" style="border-color: rgba(56,189,248,0.3); color: #38bdf8;"><i class="bi bi-gear me-1"></i>${t}</span>`).join('')}
         </div>
 
-        <div class="incident-actions">
-          <div class="evidence-preview">
-            🔍 <strong>Evidence:</strong> ${inc.evidence_count} signals correlated (Entity: <code>${inc.entity.name}</code>, PID: <code>${inc.entity.pid || 'N/A'}</code>)
+        <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary-subtle flex-wrap gap-2 incident-actions-group">
+          <div class="small text-secondary">
+            <i class="bi bi-link-45deg me-1"></i> Evidence: ${inc.evidence_count} signals correlated (Entity: <code>${inc.entity.name}</code>, PID: <code>${inc.entity.pid || 'N/A'}</code>)
           </div>
           <div>
             ${isContained ? 
-              `<button class="cyber-btn secondary" disabled style="opacity: 0.6;">✓ THREAT NEUTRALIZED</button>` :
-              `<button class="cyber-btn danger" onclick="executeContainment('${inc.incident_id}')">
-                ⚡ EXECUTE SOAR ISOLATION
+              `<button class="btn btn-sm btn-outline-success" disabled><i class="bi bi-check-lg me-1"></i>Threat Neutralized</button>` :
+              `<button class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1" onclick="executeContainment('${inc.incident_id}')">
+                <i class="bi bi-shield-slash"></i>
+                <span>Execute SOAR Containment</span>
               </button>`
             }
           </div>
@@ -473,24 +457,28 @@ function renderIncidents(incidents) {
 // Render MITRE Matrix
 function renderMitreMatrix(matrix) {
   const grid = document.getElementById("mitreGrid");
-  if (!matrix) return;
+  if (!grid || !matrix) return;
 
   grid.innerHTML = matrix.map(col => {
     const isHit = col.hit_count > 0;
     return `
-      <div class="mitre-tactic-col ${isHit ? 'compromised' : ''}">
-        <div class="tactic-header">
-          <div class="tactic-name">${col.tactic_name}</div>
-          <span class="tactic-badge ${isHit ? 'hit' : 'clear'}">${isHit ? `${col.hit_count} HITS` : 'CLEAR'}</span>
-        </div>
-        <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px;">${col.description}</div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          ${col.techniques.map(tech => `
-            <div class="technique-box ${tech.triggered ? 'triggered' : ''}">
-              <div style="font-family: var(--font-mono); font-size: 10px; opacity: 0.8;">${tech.technique_id}</div>
-              <div>${tech.technique_name}</div>
-            </div>
-          `).join('')}
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="mitre-tactic-card ${isHit ? 'compromised' : ''}">
+          <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+            <span class="fw-bold small text-white">${col.tactic_name}</span>
+            <span class="badge ${isHit ? 'bg-danger text-white' : 'bg-body-secondary text-secondary'} font-mono" style="font-size: 0.65rem;">
+              ${isHit ? `${col.hit_count} Detected` : 'Clean'}
+            </span>
+          </div>
+          <div class="text-secondary small mb-2 lh-sm" style="font-size: 0.75rem;">${col.description}</div>
+          <div class="d-flex flex-column gap-2 mt-auto">
+            ${col.techniques.map(tech => `
+              <div class="technique-item ${tech.triggered ? 'triggered' : ''}">
+                <div class="font-mono text-secondary" style="font-size: 0.7rem;">${tech.technique_id}</div>
+                <div class="fw-medium">${tech.technique_name}</div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       </div>
     `;
@@ -500,20 +488,20 @@ function renderMitreMatrix(matrix) {
 // Containment Execution
 async function executeContainment(incidentId) {
   try {
-    appendAuditLine("contain", `Executing SOAR containment pipeline for incident ${incidentId}...`);
+    appendAuditLine("contain", `Executing SOAR containment routine for ${incidentId}...`);
     const res = await fetch(`/api/contain/${incidentId}`, { method: "POST" });
     const data = await res.json();
 
     if (data.status === "success") {
       showModal(`
-        <div style="margin-bottom: 14px;">
-          <div style="font-weight: 700; color: #fff; margin-bottom: 6px; font-size: 15px;">Containment Successful</div>
-          <div style="color: var(--text-muted); font-size: 12px;">Automated defensive containment actions executed across host telemetry nodes:</div>
+        <div class="mb-3">
+          <div class="fw-bold text-white mb-1">SOAR Containment Successful</div>
+          <p class="text-secondary small mb-2">Defensive response actions executed across endpoint agent telemetry:</p>
+          <ul class="text-success small mb-0 ps-3">
+            ${data.actions_taken.map(a => `<li class="mb-1">${a}</li>`).join('')}
+          </ul>
         </div>
-        <ul style="padding-left: 20px; font-size: 13px; line-height: 1.8; color: var(--neon-emerald); margin-bottom: 16px;">
-          ${data.actions_taken.map(a => `<li>${a}</li>`).join('')}
-        </ul>
-        <div style="font-size: 11px; color: var(--text-dim); font-family: var(--font-mono);">Forensic Audit ID: ${data.audit_id || 'AUDIT-' + Date.now()}</div>
+        <div class="text-secondary small font-mono">Compliance Audit ID: ${data.audit_id || 'AUDIT-' + Date.now()}</div>
       `);
       fetchStatusAndData();
     }
@@ -524,22 +512,22 @@ async function executeContainment(incidentId) {
 
 // Contain All Threats
 async function containAllThreats() {
-  if (!confirm("Are you sure you want to execute emergency SOAR containment on ALL active incidents?")) return;
+  if (!confirm("Confirm execution of emergency SOAR containment across ALL active incidents?")) return;
 
   try {
-    appendAuditLine("contain", "🚨 EMERGENCY SOAR DIRECTIVE: Isolating all active adversary threats...");
+    appendAuditLine("contain", "Executing emergency SOAR containment across all active host incidents...");
     const res = await fetch("/api/contain-all", { method: "POST" });
     const data = await res.json();
 
     showModal(`
-      <div style="margin-bottom: 14px;">
-        <div style="font-weight: 700; color: #fff; margin-bottom: 6px; font-size: 15px;">Emergency Multi-Vector Containment Complete</div>
-        <div style="color: var(--text-muted); font-size: 12px;">Successfully executed SOAR isolation routines across ${data.contained_count} incident vectors:</div>
+      <div class="mb-3">
+        <div class="fw-bold text-white mb-1">Emergency Containment Complete</div>
+        <p class="text-secondary small mb-2">Executed automated isolation across ${data.contained_count} threat vectors:</p>
+        <ul class="text-success small mb-0 ps-3">
+          ${data.summary.map(s => `<li class="mb-1">${s}</li>`).join('')}
+        </ul>
       </div>
-      <ul style="padding-left: 20px; font-size: 12px; line-height: 1.8; color: var(--neon-emerald); margin-bottom: 16px;">
-        ${data.summary.map(s => `<li>${s}</li>`).join('')}
-      </ul>
-      <div style="color: var(--neon-cyan); font-weight: 600; font-size: 12px;">Host posture successfully restored to baseline security parameters.</div>
+      <div class="text-primary small fw-semibold">Endpoint security baseline restored.</div>
     `);
     fetchStatusAndData();
   } catch (err) {
@@ -550,7 +538,7 @@ async function containAllThreats() {
 // Adversary Simulation
 async function triggerScenario(scenario) {
   try {
-    appendAuditLine("sim", `Injecting attack scenario: ${scenario}...`);
+    appendAuditLine("sim", `Simulating threat scenario: ${scenario}...`);
     await fetch(`/api/simulate/${scenario}`, { method: "POST" });
     fetchStatusAndData();
   } catch (e) {
@@ -562,23 +550,23 @@ async function triggerScenario(scenario) {
 async function runScan(mode = "live") {
   const btn = document.getElementById("btnLiveScan");
   btn.disabled = true;
-  btn.innerHTML = `<span class="btn-icon">⏳</span> <span class="btn-text">SCANNING OS...</span>`;
+  btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> <span>Scanning Host...</span>`;
 
   try {
-    appendAuditLine("scan", `Starting live telemetry harvest across processes, sockets, and persistence...`);
+    appendAuditLine("scan", `Initiated live host scan across processes, sockets, and persistence mechanisms...`);
     const res = await fetch("/api/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode: mode, scenario: null }),
     });
     const data = await res.json();
-    appendAuditLine("scan", `Harvested ${data.signal_count} signals across ${data.entity_count} entities.`);
+    appendAuditLine("scan", `Harvested ${data.signal_count} telemetry signals across ${data.entity_count} entities.`);
     fetchStatusAndData();
   } catch (e) {
     console.error("Scan error", e);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = `<span class="btn-icon">⚡</span> <span class="btn-text">RUN SCAN</span>`;
+    btn.innerHTML = `<i class="bi bi-lightning-charge-fill me-1"></i> <span>Run Host Scan</span>`;
   }
 }
 
@@ -590,16 +578,16 @@ async function loadAuditLogs() {
     const terminal = document.getElementById("auditOutput");
 
     if (!audits || audits.length === 0) {
-      terminal.innerHTML = `<div class="log-line text-muted">// No historical containment events recorded yet.</div>`;
+      terminal.innerHTML = `<div class="text-secondary small">// No historical audit records logged yet.</div>`;
       return;
     }
 
     terminal.innerHTML = audits.map(a => `
-      <div class="log-line">
-        <span style="color: var(--text-dim);">[${a.timestamp.substring(11, 19)}]</span>
-        <span style="color: var(--neon-rose); font-weight: 700;">[${a.action}]</span>
-        <span style="color: var(--neon-cyan);">${a.incident_id}</span>
-        <span style="color: #f1f5f9;">— ${a.details}</span>
+      <div class="audit-row font-mono small d-flex flex-wrap gap-2 align-items-baseline">
+        <span class="text-secondary">[${a.timestamp.substring(11, 19)}]</span>
+        <span class="badge text-bg-danger-subtle text-danger border border-danger-subtle font-mono">${a.action}</span>
+        <span class="text-primary">${a.incident_id}</span>
+        <span class="text-white">— ${a.details}</span>
       </div>
     `).join('');
   } catch (e) {
@@ -612,24 +600,38 @@ function appendAuditLine(tag, msg) {
   if (!terminal) return;
   const time = new Date().toISOString().substring(11, 19);
   const div = document.createElement("div");
-  div.className = "log-line";
-  
-  let tagColor = "var(--neon-amber)";
-  if (tag === "contain") tagColor = "var(--neon-rose)";
-  if (tag === "system") tagColor = "var(--neon-emerald)";
-  if (tag === "scan") tagColor = "var(--neon-cyan)";
-  if (tag === "sim") tagColor = "var(--neon-purple)";
+  div.className = "audit-row font-mono small d-flex flex-wrap gap-2 align-items-baseline";
 
-  div.innerHTML = `<span style="color: var(--text-dim);">[${time}]</span> <span style="color: ${tagColor}; font-weight: 700;">[${tag.toUpperCase()}]</span> <span>${msg}</span>`;
+  let badgeColor = "text-bg-warning-subtle text-warning border border-warning-subtle";
+  if (tag === "contain") badgeColor = "text-bg-danger-subtle text-danger border border-danger-subtle";
+  if (tag === "system") badgeColor = "text-bg-success-subtle text-success border border-success-subtle";
+  if (tag === "scan") badgeColor = "text-bg-info-subtle text-info border border-info-subtle";
+  if (tag === "sim") badgeColor = "text-bg-primary-subtle text-primary border border-primary-subtle";
+
+  div.innerHTML = `<span class="text-secondary">[${time}]</span> <span class="badge ${badgeColor} font-mono">${tag.toUpperCase()}</span> <span class="text-white">${msg}</span>`;
   terminal.prepend(div);
 }
 
-// Modal handling
+// Modal handling (Bootstrap Modal with graceful fallback)
 function showModal(content) {
   document.getElementById("modalContent").innerHTML = content;
-  document.getElementById("containmentModal").classList.add("open");
+  const modalElem = document.getElementById("containmentModal");
+  if (window.bootstrap && bootstrap.Modal) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElem);
+    modalInstance.show();
+  } else {
+    modalElem.classList.add("show");
+    modalElem.style.display = "block";
+  }
 }
 
 function closeModal() {
-  document.getElementById("containmentModal").classList.remove("open");
+  const modalElem = document.getElementById("containmentModal");
+  if (window.bootstrap && bootstrap.Modal) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElem);
+    modalInstance.hide();
+  } else {
+    modalElem.classList.remove("show");
+    modalElem.style.display = "none";
+  }
 }
