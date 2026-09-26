@@ -6,7 +6,7 @@
   <title>AEGIS-X // Autonomous EDR & Cyber Defense SOC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
   <!-- Local Vis.js standalone bundle -->
   <script type="text/javascript" src="/static/vis-network.min.js"></script>
@@ -17,6 +17,7 @@
     <div class="header-top-row">
       <div class="brand-zone">
         <div class="logo-radar">
+          <div class="radar-ping"></div>
           <div class="radar-sweep"></div>
           <span class="shield-glyph">🛡️</span>
         </div>
@@ -26,10 +27,33 @@
         </div>
       </div>
 
+      <!-- Live SOC Clock & Telemetry Status -->
+      <div class="soc-telemetry-hud">
+        <div class="hud-pulse-dot"></div>
+        <div class="hud-details">
+          <div class="hud-status-text">DEFCON-1 ENGINE LIVE</div>
+          <div class="soc-clock" id="socClock">--:--:-- UTC</div>
+        </div>
+      </div>
+
       <!-- Live Status Dial -->
       <div class="header-posture">
         <div class="score-circle-wrap">
           <svg class="score-ring" viewBox="0 0 100 100">
+            <defs>
+              <linearGradient id="scoreGradEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#10b981" />
+                <stop offset="100%" stop-color="#00f0ff" />
+              </linearGradient>
+              <linearGradient id="scoreGradAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f59e0b" />
+                <stop offset="100%" stop-color="#f97316" />
+              </linearGradient>
+              <linearGradient id="scoreGradRose" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff0055" />
+                <stop offset="100%" stop-color="#ec4899" />
+              </linearGradient>
+            </defs>
             <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
             <circle id="scoreRingProgress" class="ring-val" cx="50" cy="50" r="42"></circle>
           </svg>
@@ -49,16 +73,53 @@
       </button>
       <div class="dropdown">
         <button id="btnSimulateDropdown" class="cyber-btn secondary">
-          <span class="btn-icon">☣️</span> <span class="btn-text">SIMULATE ADVERSARY</span> ▾
+          <span class="btn-icon">☣️</span> <span class="btn-text">SIMULATE ADVERSARY</span> <span class="caret-icon">▾</span>
         </button>
         <div class="dropdown-menu" id="simMenu">
-          <div class="dropdown-item" onclick="triggerScenario('all_threats')">🔴 Multi-Vector Attack (All Threats)</div>
-          <div class="dropdown-item" onclick="triggerScenario('apt29_covert_c2')">🌐 APT-29 C2 Beacon & Persistence</div>
-          <div class="dropdown-item" onclick="triggerScenario('blackcat_ransomware')">🔒 BlackCat Ransomware Cryptor</div>
-          <div class="dropdown-item" onclick="triggerScenario('reverse_shell_rce')">🐚 Remote Interactive Reverse Shell</div>
-          <div class="dropdown-item" onclick="triggerScenario('pegasus_spyware')">👁️ Covert Surveillance & Screen Grab</div>
+          <div class="dropdown-header">CYBER RANGE SCENARIOS</div>
+          <div class="dropdown-item" onclick="triggerScenario('all_threats')">
+            <span class="drop-icon">🔴</span>
+            <div>
+              <div class="drop-title">Multi-Vector Attack</div>
+              <div class="drop-sub">Ransomware, C2 & Reverse Shell simultaneously</div>
+            </div>
+          </div>
+          <div class="dropdown-item" onclick="triggerScenario('apt29_covert_c2')">
+            <span class="drop-icon">🌐</span>
+            <div>
+              <div class="drop-title">APT-29 Covert C2</div>
+              <div class="drop-sub">DNS/HTTPS beaconing & LaunchAgent persistence</div>
+            </div>
+          </div>
+          <div class="dropdown-item" onclick="triggerScenario('blackcat_ransomware')">
+            <span class="drop-icon">🔒</span>
+            <div>
+              <div class="drop-title">BlackCat Ransomware</div>
+              <div class="drop-sub">Mass file enumeration & AES encryption burst</div>
+            </div>
+          </div>
+          <div class="dropdown-item" onclick="triggerScenario('reverse_shell_rce')">
+            <span class="drop-icon">🐚</span>
+            <div>
+              <div class="drop-title">Interactive Reverse Shell</div>
+              <div class="drop-sub">PTY socket spawned via python3/bash</div>
+            </div>
+          </div>
+          <div class="dropdown-item" onclick="triggerScenario('pegasus_spyware')">
+            <span class="drop-icon">👁️</span>
+            <div>
+              <div class="drop-title">Covert Surveillance Hook</div>
+              <div class="drop-sub">AVFoundation microphone & screen capture tap</div>
+            </div>
+          </div>
           <div class="dropdown-divider"></div>
-          <div class="dropdown-item green" onclick="triggerScenario('enterprise_baseline')">🟢 Enterprise Benign Baseline (100%)</div>
+          <div class="dropdown-item green" onclick="triggerScenario('enterprise_baseline')">
+            <span class="drop-icon">🟢</span>
+            <div>
+              <div class="drop-title">Enterprise Benign Baseline</div>
+              <div class="drop-sub">Restore verified baseline (100% clean posture)</div>
+            </div>
+          </div>
         </div>
       </div>
       <button id="btnEmergencyContain" class="cyber-btn danger" onclick="containAllThreats()">
@@ -69,25 +130,44 @@
 
   <!-- Metric Badges Row -->
   <section class="metrics-bar">
-    <div class="metric-card">
-      <div class="metric-title">CORRELATED INCIDENTS</div>
+    <div class="metric-card card-danger">
+      <div class="metric-card-header">
+        <div class="metric-title">CORRELATED INCIDENTS</div>
+        <span class="metric-indicator danger">ALERT</span>
+      </div>
       <div class="metric-num text-danger" id="metricIncidentCount">0</div>
       <div class="metric-meta">Multi-signal correlated threats</div>
+      <div class="metric-progress-line danger"></div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">ENTITIES PROFILED</div>
+
+    <div class="metric-card card-cyan">
+      <div class="metric-card-header">
+        <div class="metric-title">ENTITIES PROFILED</div>
+        <span class="metric-indicator cyan">DISCOVERED</span>
+      </div>
       <div class="metric-num text-cyan" id="metricEntityCount">0</div>
       <div class="metric-meta">Processes, Sockets, LaunchAgents</div>
+      <div class="metric-progress-line cyan"></div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">TELEMETRY SIGNALS</div>
+
+    <div class="metric-card card-emerald">
+      <div class="metric-card-header">
+        <div class="metric-title">TELEMETRY SIGNALS</div>
+        <span class="metric-indicator emerald">STREAMING</span>
+      </div>
       <div class="metric-num text-emerald" id="metricSignalCount">0</div>
       <div class="metric-meta">Atomic security observations</div>
+      <div class="metric-progress-line emerald"></div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">SOAR CONTAINMENTS</div>
+
+    <div class="metric-card card-amber">
+      <div class="metric-card-header">
+        <div class="metric-title">SOAR CONTAINMENTS</div>
+        <span class="metric-indicator amber">ENFORCED</span>
+      </div>
       <div class="metric-num text-amber" id="metricContainCount">0</div>
       <div class="metric-meta">Active isolated targets</div>
+      <div class="metric-progress-line amber"></div>
     </div>
   </section>
 
@@ -95,16 +175,16 @@
   <div class="soc-nav-wrapper">
     <nav class="soc-nav">
       <button class="nav-tab active" data-tab="tab-graph" id="navTabGraph">
-        <span class="tab-icon">🕸️</span> <span class="tab-label">ATTACK GRAPH</span>
+        <span class="tab-icon">🕸️</span> <span class="tab-label">ATTACK GRAPH & LINEAGE</span>
       </button>
       <button class="nav-tab" data-tab="tab-incidents" id="navTabIncidents">
         <span class="tab-icon">🚨</span> <span class="tab-label">INCIDENT QUEUE</span> <span id="incidentBadgeCount" class="counter-badge">0</span>
       </button>
       <button class="nav-tab" data-tab="tab-mitre" id="navTabMitre">
-        <span class="tab-icon">🎯</span> <span class="tab-label">MITRE ATT&CK®</span>
+        <span class="tab-icon">🎯</span> <span class="tab-label">MITRE ATT&CK® MATRIX</span>
       </button>
       <button class="nav-tab" data-tab="tab-audit" id="navTabAudit">
-        <span class="tab-icon">📜</span> <span class="tab-label">AUDIT TRAIL</span>
+        <span class="tab-icon">📜</span> <span class="tab-label">FORENSIC AUDIT TRAIL</span>
       </button>
     </nav>
   </div>
@@ -115,18 +195,28 @@
     <div id="tab-graph" class="tab-pane active">
       <div class="graph-layout">
         <div class="graph-viewport-box">
+          <!-- Tactical HUD Corners -->
+          <div class="hud-corner top-left"></div>
+          <div class="hud-corner top-right"></div>
+          <div class="hud-corner bottom-left"></div>
+          <div class="hud-corner bottom-right"></div>
+
           <div class="graph-toolbar">
             <div class="legend-scroll-wrap">
               <div class="legend-items">
-                <span class="legend-tag critical">CRITICAL</span>
-                <span class="legend-tag high">HIGH RISK</span>
-                <span class="legend-tag medium">MEDIUM</span>
-                <span class="legend-tag benign">BENIGN</span>
+                <span class="legend-tag critical"><span class="dot"></span> CRITICAL EXPLOIT</span>
+                <span class="legend-tag high"><span class="dot"></span> HIGH RISK</span>
+                <span class="legend-tag medium"><span class="dot"></span> MEDIUM</span>
+                <span class="legend-tag benign"><span class="dot"></span> VERIFIED BENIGN</span>
               </div>
             </div>
             <div class="graph-actions">
-              <button class="btn-micro" onclick="resetGraphPhysics()" title="Stabilize physics simulation">Stabilize</button>
-              <button class="btn-micro" onclick="fitGraphView()" title="Fit all nodes to view">Fit View</button>
+              <button class="btn-micro" onclick="resetGraphPhysics()" title="Stabilize physics layout">
+                <span>🔄</span> Stabilize
+              </button>
+              <button class="btn-micro" onclick="fitGraphView()" title="Fit all nodes to view">
+                <span>🔍</span> Fit View
+              </button>
             </div>
           </div>
           <div id="visNetworkContainer" class="vis-container"></div>
@@ -137,12 +227,16 @@
           <div class="inspector-header">
             <div class="inspector-header-left">
               <span class="inspector-title">FORENSIC ENTITY INSPECTOR</span>
-              <span class="pulse-indicator">LIVE</span>
+              <span class="pulse-indicator">LIVE DOSSIER</span>
             </div>
             <button class="btn-micro inspector-close-btn" onclick="clearInspector()" title="Clear Selection">✕ Clear</button>
           </div>
           <div id="inspectorContent" class="inspector-body">
-            <div class="empty-hint">Select any node in the Attack Graph to inspect live process lineage, socket bindings, and raw telemetry signals.</div>
+            <div class="empty-hint">
+              <div class="empty-hint-icon">🔍</div>
+              <div class="empty-hint-title">No Entity Selected</div>
+              <div class="empty-hint-sub">Select any node on the Attack Graph to inspect live process lineage, socket bindings, and raw telemetry signals.</div>
+            </div>
           </div>
         </aside>
       </div>
@@ -158,8 +252,9 @@
     <!-- TAB 3: MITRE ATT&CK MATRIX -->
     <div id="tab-mitre" class="tab-pane">
       <div class="mitre-header-info">
-        <h3>MITRE ATT&CK Enterprise Matrix Alignment</h3>
-        <p>Real-time correlation of detected behavioral telemetry mapped against global adversary Tactics and Techniques.</p>
+        <div class="mitre-badge-lead">ENTERPRISE ADVERSARY TAXONOMY</div>
+        <h3>MITRE ATT&CK® Enterprise Matrix Alignment</h3>
+        <p>Real-time correlation of detected endpoint behavioral telemetry mapped directly against global adversary Tactics and Techniques.</p>
       </div>
       <div class="mitre-grid" id="mitreGrid">
         <!-- Rendered via JS -->
@@ -171,11 +266,11 @@
       <div class="audit-terminal-card">
         <div class="terminal-bar">
           <div class="terminal-dots"><span></span><span></span><span></span></div>
-          <div class="terminal-title">AEGIS-X SOAR RESPONDER AUDIT LEDGER</div>
-          <button class="btn-micro" onclick="loadAuditLogs()">Refresh Ledger</button>
+          <div class="terminal-title">AEGIS-X SOAR RESPONDER FORENSIC AUDIT LEDGER</div>
+          <button class="btn-micro" onclick="loadAuditLogs()"><span>🔄</span> Refresh Ledger</button>
         </div>
         <div class="terminal-output" id="auditOutput">
-          <div class="log-line text-muted">// Initializing audit stream...</div>
+          <div class="log-line text-muted">// Initializing Aegis-X forensic audit stream...</div>
         </div>
       </div>
     </div>
