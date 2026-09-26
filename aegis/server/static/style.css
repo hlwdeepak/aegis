@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AEGIS-X ENTERPRISE EDR // BOOTSTRAP 5.3 CUSTOM OVERLAYS
+   AEGIS-X ENTERPRISE EDR // HTML5 & CSS3 RESPONSIVE DESIGN SYSTEM
    ========================================================================== */
 
 :root {
@@ -7,14 +7,35 @@
   --font-heading: 'Plus Jakarta Sans', var(--font-sans);
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   
-  --bs-body-bg: #090d16;
-  --bs-body-color: #f1f5f9;
+  --bg-app-dark: #080c16;
+  --bg-surface-header: #0d1424;
+  --bg-surface-card: #0e1628;
+  --bg-surface-elevated: #151f38;
+  
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  
+  --bs-primary: #3b82f6;
+  --bs-primary-rgb: 59, 130, 246;
+  --bs-danger: #ef4444;
+  --bs-warning: #f59e0b;
+  --bs-success: #10b981;
+  --bs-info: #0ea5e9;
+}
+
+/* Base Document Setup */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-sans);
+  background-color: var(--bg-app-dark) !important;
+  color: #f1f5f9;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .font-heading {
@@ -25,43 +46,57 @@ body {
   font-family: var(--font-mono);
 }
 
-/* Brand Icon Box */
+.bg-app-dark {
+  background-color: var(--bg-app-dark) !important;
+}
+
+.bg-surface-header {
+  background-color: var(--bg-surface-header) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.bg-surface-card {
+  background-color: var(--bg-surface-card) !important;
+}
+
+/* Header & Brand Elements */
 .brand-icon-box {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: linear-gradient(135deg, #1d4ed8, #2563eb);
 }
 
-/* Pulsing Status Dot */
 .status-pulse-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   display: inline-block;
-  animation: pulseDot 2s ease-in-out infinite;
+  animation: statusPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes pulseDot {
+@keyframes statusPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
 /* Tab Navigation */
 .nav-pills .nav-link {
-  color: var(--bs-secondary-color);
+  color: #94a3b8;
   border-radius: 6px;
   font-size: 0.85rem;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .nav-pills .nav-link:hover {
-  color: #fff;
+  color: #ffffff;
   background-color: rgba(255, 255, 255, 0.05);
 }
 
 .nav-pills .nav-link.active {
-  color: #fff;
+  color: #ffffff;
   background-color: var(--bs-primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .tab-pane {
@@ -74,28 +109,68 @@ body {
 
 /* KPI Cards */
 .card {
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  background-color: #0e1526 !important;
-  transition: border-color 0.15s ease;
+  border-color: var(--border-subtle) !important;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .card:hover {
-  border-color: rgba(255, 255, 255, 0.18) !important;
+  border-color: var(--border-hover) !important;
+}
+
+/* Filter Pills */
+.filter-pill {
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.filter-pill.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* Attack Graph Viewport */
+.graph-card-body {
+  height: 580px;
+  overflow: hidden;
+}
+
+.graph-canvas-container {
+  min-height: 380px;
+  background-color: #070b14;
+}
+
+/* Responsive Offcanvas Inspector */
+@media (min-width: 992px) {
+  #nodeInspector.offcanvas-lg {
+    position: static;
+    visibility: visible !important;
+    transform: none !important;
+    width: 100% !important;
+  }
+}
+
+.inspector-scroll-body {
+  max-height: 520px;
 }
 
 /* Incident Cards */
 .incident-card {
-  background-color: #0e1526;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-subtle);
   border-left: 4px solid var(--bs-primary);
   border-radius: 8px;
   padding: 18px 20px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .incident-card:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-hover);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .incident-card.critical {
@@ -119,12 +194,38 @@ body {
   padding: 12px 14px;
 }
 
+.plain-english-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0ea5e9;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.plain-english-text {
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  line-height: 1.55;
+}
+
 /* Actionable Precautions Box */
 .precautions-box {
-  background: rgba(16, 185, 129, 0.06);
+  background: rgba(16, 185, 129, 0.05);
   border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 6px;
   padding: 12px 14px;
+}
+
+.precautions-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .precautions-box ul {
@@ -160,8 +261,8 @@ body {
 
 /* MITRE Tactic Columns */
 .mitre-tactic-card {
-  background: #0e1526;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-surface-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 14px;
   height: 100%;
@@ -171,12 +272,12 @@ body {
 }
 
 .mitre-tactic-card.compromised {
-  border-color: rgba(239, 68, 68, 0.5);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.08);
 }
 
 .technique-item {
-  background: #141c30;
+  background: #131b2e;
   border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 8px 10px;
   border-radius: 4px;
@@ -191,29 +292,49 @@ body {
 }
 
 /* Audit Log Table */
+.audit-ledger-body {
+  min-height: 440px;
+  max-height: 580px;
+  background-color: #060911;
+}
+
 .audit-row {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   line-height: 1.6;
 }
 
-/* Vis.js Network Canvas */
-#visNetworkContainer canvas {
-  outline: none;
+/* Mobile & Tablet Optimizations */
+@media (max-width: 991.98px) {
+  .graph-card-body {
+    height: 420px;
+  }
+
+  #nodeInspector.offcanvas-lg {
+    max-width: 85vw;
+    background-color: var(--bg-surface-card);
+  }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 575.98px) {
+  .graph-card-body {
+    height: 360px;
+  }
+
+  .incident-card {
+    padding: 14px;
+  }
+
   .incident-actions-group {
     flex-direction: column;
     align-items: stretch !important;
-    gap: 10px;
+    gap: 8px;
   }
 
   .incident-actions-group .btn {
     width: 100%;
   }
 
-  .nav-pills {
-    padding-bottom: 6px;
+  .btn {
+    touch-action: manipulation;
   }
 }

@@ -3,12 +3,15 @@
 let networkInstance = null;
 let currentGraphData = { nodes: [], edges: [] };
 let activeIncidents = [];
+let currentFilter = "all";
+let currentSearchQuery = "";
 let ws = null;
 
 // Initialize on DOM load
 document.addEventListener("DOMContentLoaded", () => {
   initLiveClock();
   initTabs();
+  initIncidentFilters();
   initWebSocket();
   fetchStatusAndData();
 
@@ -48,15 +51,19 @@ function initTabs() {
   const tabButtons = document.querySelectorAll(".nav-link[data-tab]");
   tabButtons.forEach(btn => {
     btn.addEventListener("click", () => {
-      tabButtons.forEach(b => b.classList.remove("active"));
+      tabButtons.forEach(b => {
+        b.classList.remove("active");
+        b.setAttribute("aria-selected", "false");
+      });
       document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("active"));
 
       btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
       const target = document.getElementById(btn.dataset.tab);
       if (target) {
         target.classList.add("active");
         if (btn.dataset.tab === "tab-graph" && networkInstance) {
-          setTimeout(() => { networkInstance.fit(); }, 100);
+          setTimeout(() => { networkInstance.fit(); }, 120);
         }
         if (btn.dataset.tab === "tab-audit") {
           loadAuditLogs();
@@ -64,6 +71,56 @@ function initTabs() {
       }
     });
   });
+}
+
+// Incident Search & Filtering
+function initIncidentFilters() {
+  const searchInput = document.getElementById("incidentSearchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      currentSearchQuery = e.target.value.toLowerCase().trim();
+      applyIncidentFilters();
+    });
+  }
+
+  const filterBtns = document.querySelectorAll(".filter-pill");
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter;
+      applyIncidentFilters();
+    });
+  });
+}
+
+function applyIncidentFilters() {
+  let filtered = activeIncidents.slice();
+
+  // Apply severity / containment filter
+  if (currentFilter === "critical") {
+    filtered = filtered.filter(i => i.severity === "critical" && i.status !== "CONTAINED_ISOLATED");
+  } else if (currentFilter === "high") {
+    filtered = filtered.filter(i => i.severity === "high" && i.status !== "CONTAINED_ISOLATED");
+  } else if (currentFilter === "medium") {
+    filtered = filtered.filter(i => i.severity === "medium" && i.status !== "CONTAINED_ISOLATED");
+  } else if (currentFilter === "contained") {
+    filtered = filtered.filter(i => i.status === "CONTAINED_ISOLATED");
+  }
+
+  // Apply text search filter
+  if (currentSearchQuery) {
+    filtered = filtered.filter(i => {
+      const titleMatch = (i.title || "").toLowerCase().includes(currentSearchQuery);
+      const entityMatch = (i.entity?.name || "").toLowerCase().includes(currentSearchQuery);
+      const pidMatch = String(i.entity?.pid || "").includes(currentSearchQuery);
+      const explMatch = (i.explanation || "").toLowerCase().includes(currentSearchQuery);
+      const mitreMatch = (i.mitre_techniques || []).some(t => t.toLowerCase().includes(currentSearchQuery));
+      return titleMatch || entityMatch || pidMatch || explMatch || mitreMatch;
+    });
+  }
+
+  renderFilteredIncidents(filtered);
 }
 
 // WebSocket Live Telemetry Stream
@@ -118,7 +175,8 @@ async function fetchStatusAndData() {
 
     activeIncidents = incRes;
     updatePostureMetrics(statusRes.metrics);
-    renderIncidents(incRes);
+    updateFilterCounts();
+    applyIncidentFilters();
     renderVisGraph(graphRes);
     renderMitreMatrix(mitreRes);
     loadAuditLogs();
@@ -144,13 +202,13 @@ function updatePostureMetrics(metrics) {
 
   if (score >= 80) {
     scoreRing.style.stroke = "#10b981";
-    tierBadge.className = "fw-bold fs-6 text-success";
+    tierBadge.className = "fw-bold fs-6 text-success font-heading";
   } else if (score >= 50) {
     scoreRing.style.stroke = "#f59e0b";
-    tierBadge.className = "fw-bold fs-6 text-warning";
+    tierBadge.className = "fw-bold fs-6 text-warning font-heading";
   } else {
     scoreRing.style.stroke = "#ef4444";
-    tierBadge.className = "fw-bold fs-6 text-danger";
+    tierBadge.className = "fw-bold fs-6 text-danger font-heading";
   }
 
   tierBadge.textContent = metrics.posture_tier;
@@ -160,6 +218,25 @@ function updatePostureMetrics(metrics) {
   document.getElementById("metricSignalCount").textContent = metrics.total_signals;
   document.getElementById("metricContainCount").textContent = metrics.active_containments || 0;
   document.getElementById("incidentBadgeCount").textContent = metrics.incident_count;
+}
+
+function updateFilterCounts() {
+  const total = activeIncidents.length;
+  const critical = activeIncidents.filter(i => i.severity === "critical" && i.status !== "CONTAINED_ISOLATED").length;
+  const high = activeIncidents.filter(i => i.severity === "high" && i.status !== "CONTAINED_ISOLATED").length;
+  const medium = activeIncidents.filter(i => i.severity === "medium" && i.status !== "CONTAINED_ISOLATED").length;
+  const contained = activeIncidents.filter(i => i.status === "CONTAINED_ISOLATED").length;
+
+  const setIfExists = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+
+  setIfExists("filterCountAll", total);
+  setIfExists("filterCountCritical", critical);
+  setIfExists("filterCountHigh", high);
+  setIfExists("filterCountMedium", medium);
+  setIfExists("filterCountContained", contained);
 }
 
 // Vis.js Graph Rendering
@@ -282,6 +359,15 @@ function renderVisGraph(graphData) {
   });
 }
 
+function zoomGraph(factor) {
+  if (!networkInstance) return;
+  const currentScale = networkInstance.getScale();
+  networkInstance.moveTo({
+    scale: currentScale * factor,
+    animation: { duration: 300, easingFunction: "easeInOutQuad" }
+  });
+}
+
 function resetGraphPhysics() {
   if (networkInstance) {
     networkInstance.setOptions({ physics: { enabled: true } });
@@ -297,7 +383,7 @@ function fitGraphView() {
   }
 }
 
-// Node Inspector Sidebar
+// Node Inspector Sidebar & Mobile Offcanvas
 function inspectNode(nodeKey) {
   const node = currentGraphData.nodes.find(n => n.id === nodeKey);
   const inspector = document.getElementById("inspectorContent");
@@ -351,17 +437,19 @@ function inspectNode(nodeKey) {
     html += `
       <div class="alert alert-success d-flex align-items-center gap-2 p-2 small m-0" role="alert">
         <i class="bi bi-check-circle-fill"></i>
-        <span>No multi-signal threats correlated for this node.</span>
+        <span>No active multi-signal threats correlated for this node.</span>
       </div>
     `;
   }
 
   inspector.innerHTML = html;
 
-  if (window.innerWidth <= 992) {
-    const inspectorElem = document.getElementById("nodeInspector");
-    if (inspectorElem) {
-      inspectorElem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  // On mobile screens (< 992px), open offcanvas drawer
+  if (window.innerWidth < 992 && window.bootstrap && bootstrap.Offcanvas) {
+    const offcanvasElem = document.getElementById("nodeInspector");
+    if (offcanvasElem) {
+      const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(offcanvasElem);
+      offcanvasInstance.show();
     }
   }
 }
@@ -371,21 +459,21 @@ function clearInspector() {
     <div class="text-center py-5 text-secondary">
       <i class="bi bi-search fs-2 mb-2 d-block opacity-50"></i>
       <h6 class="fw-semibold text-white mb-1">No Entity Selected</h6>
-      <p class="small opacity-75 m-0">Click any process, socket, or persistence node in the attack graph to inspect telemetry.</p>
+      <p class="small opacity-75 m-0">Click any process, socket, or persistence node in the attack graph to inspect telemetry details.</p>
     </div>
   `;
 }
 
-// Render Incidents List
-function renderIncidents(incidents) {
+// Render Filtered Incidents List
+function renderFilteredIncidents(incidents) {
   const container = document.getElementById("incidentsList");
   if (!incidents || incidents.length === 0) {
     container.innerHTML = `
-      <div class="card p-5 text-center bg-dark border">
+      <article class="card p-5 text-center bg-surface-card border">
         <div class="fs-1 text-success mb-2"><i class="bi bi-shield-check"></i></div>
-        <h5 class="fw-bold text-white mb-1">Zero Correlated Threats</h5>
-        <p class="text-secondary small mb-0">All monitored endpoint activity complies with verified baseline policies.</p>
-      </div>
+        <h5 class="fw-bold text-white mb-1 font-heading">No Incidents Found</h5>
+        <p class="text-secondary small mb-0">No active incidents matching the selected filter criteria.</p>
+      </article>
     `;
     return;
   }
@@ -399,7 +487,7 @@ function renderIncidents(incidents) {
     else if (inc.severity === "high") badgeClass = "text-bg-warning-subtle text-warning border border-warning-subtle";
 
     return `
-      <div class="incident-card ${sevClass}">
+      <article class="incident-card ${sevClass}" data-incident-id="${inc.incident_id}">
         <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="badge ${badgeClass} text-uppercase font-mono">${inc.severity}</span>
@@ -449,7 +537,7 @@ function renderIncidents(incidents) {
             }
           </div>
         </div>
-      </div>
+      </article>
     `;
   }).join('');
 }
@@ -465,7 +553,7 @@ function renderMitreMatrix(matrix) {
       <div class="col-12 col-md-6 col-xl-3">
         <div class="mitre-tactic-card ${isHit ? 'compromised' : ''}">
           <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-            <span class="fw-bold small text-white">${col.tactic_name}</span>
+            <span class="fw-bold small text-white font-heading">${col.tactic_name}</span>
             <span class="badge ${isHit ? 'bg-danger text-white' : 'bg-body-secondary text-secondary'} font-mono" style="font-size: 0.65rem;">
               ${isHit ? `${col.hit_count} Detected` : 'Clean'}
             </span>
@@ -612,7 +700,7 @@ function appendAuditLine(tag, msg) {
   terminal.prepend(div);
 }
 
-// Modal handling (Bootstrap Modal with graceful fallback)
+// Modal handling
 function showModal(content) {
   document.getElementById("modalContent").innerHTML = content;
   const modalElem = document.getElementById("containmentModal");
