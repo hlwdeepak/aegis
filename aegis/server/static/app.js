@@ -27,9 +27,11 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       if (networkInstance) {
+        networkInstance.setSize('100%', '100%');
+        networkInstance.redraw();
         networkInstance.fit();
       }
-    }, 200);
+    }, 150);
   });
 });
 
@@ -311,6 +313,9 @@ function renderVisGraph(graphData) {
   };
 
   const options = {
+    autoResize: true,
+    width: '100%',
+    height: '100%',
     nodes: {
       shape: "box",
       margin: 8,

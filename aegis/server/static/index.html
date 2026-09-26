@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <meta name="theme-color" content="#090d16">
-  <meta name="description" content="Aegis-X Enterprise Autonomous Endpoint Detection & Response (EDR) Platform">
   <title>Aegis-X Enterprise // Autonomous EDR & Security Operations</title>
   
   <!-- Google Fonts: Inter, Plus Jakarta Sans, JetBrains Mono -->
@@ -16,70 +15,65 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   
-  <!-- Custom EDR & Responsive Styling -->
+  <!-- Custom EDR & Responsive Fixes -->
   <link rel="stylesheet" href="/static/style.css">
   
-  <!-- Standalone Vis.js Network bundle -->
+  <!-- Vis.js Standalone Bundle -->
   <script type="text/javascript" src="/static/vis-network.min.js"></script>
 </head>
-<body class="bg-app-dark text-light d-flex flex-column min-vh-100">
+<body class="bg-app-dark text-light d-flex flex-column min-vh-100 w-100 overflow-x-hidden">
 
-  <!-- HTML5 Header & Main Navigation -->
-  <header class="navbar navbar-expand-lg border-bottom sticky-top bg-surface-header px-3 px-lg-4 py-2" role="banner">
+  <!-- Top Navigation Bar -->
+  <header class="navbar navbar-expand-lg border-bottom sticky-top bg-surface-header px-2 px-sm-3 px-lg-4 py-2 w-100" role="banner">
     <div class="container-fluid px-0">
       
       <!-- Brand & Agent Status -->
-      <div class="d-flex align-items-center gap-2 gap-md-3">
-        <a class="navbar-brand d-flex align-items-center gap-2 m-0 p-0 text-decoration-none" href="#" aria-label="Aegis-X Home">
+      <div class="d-flex align-items-center gap-2">
+        <a class="navbar-brand d-flex align-items-center gap-2 m-0 p-0 text-decoration-none" href="#">
           <div class="brand-icon-box rounded d-flex align-items-center justify-content-center shadow-sm">
             <i class="bi bi-shield-check fs-5 text-white"></i>
           </div>
-          <div class="d-flex align-items-baseline gap-2">
+          <div class="d-flex align-items-baseline gap-1 gap-sm-2">
             <span class="fw-bold tracking-tight text-white fs-5 font-heading">Aegis<span class="text-primary">X</span></span>
-            <span class="badge text-bg-secondary font-mono d-none d-sm-inline-block" style="font-size: 0.65rem;">ENTERPRISE EDR</span>
+            <span class="badge text-bg-secondary font-mono text-uppercase d-none d-sm-inline-block" style="font-size: 0.65rem;">ENTERPRISE EDR</span>
           </div>
         </a>
 
-        <!-- Live Host Pulse Status -->
-        <div class="d-flex align-items-center gap-2 bg-body-secondary px-2 px-md-3 py-1 rounded border border-secondary-subtle font-mono text-secondary small">
+        <!-- Live Status Dot -->
+        <div class="d-flex align-items-center gap-1 gap-sm-2 bg-body-secondary px-2 py-1 rounded border border-secondary-subtle font-mono text-secondary small">
           <span class="status-pulse-dot bg-success rounded-circle" aria-hidden="true"></span>
-          <span class="d-none d-sm-inline">Agent: <strong class="text-white" id="hostName">macOS Host</strong></span>
-          <span class="d-none d-sm-inline opacity-50">|</span>
-          <span id="socClock" class="text-white fw-medium">--:--:-- UTC</span>
+          <span class="d-none d-md-inline small">Agent: <strong class="text-white" id="hostName">macOS Host</strong> | </span>
+          <span id="socClock" class="text-white small fw-medium">--:--:-- UTC</span>
         </div>
       </div>
 
-      <!-- Mobile Hamburger Toggle -->
-      <button class="navbar-toggler border-0 shadow-none p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarActions" aria-controls="navbarActions" aria-expanded="false" aria-label="Toggle action controls">
-        <i class="bi bi-list fs-3 text-secondary"></i>
+      <!-- Mobile Toggle Button -->
+      <button class="navbar-toggler border-0 shadow-none p-1 text-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#navbarActions" aria-controls="navbarActions" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="bi bi-list fs-2"></i>
       </button>
 
-      <!-- Action Controls (Collapsible on Mobile) -->
+      <!-- Action Controls -->
       <div class="collapse navbar-collapse justify-content-end mt-2 mt-lg-0" id="navbarActions">
-        <div class="d-flex flex-wrap align-items-center gap-2 pt-2 pt-lg-0 border-top border-lg-0 border-secondary-subtle">
+        <div class="d-flex flex-wrap align-items-center gap-2 pt-2 pt-lg-0 border-top border-lg-0 border-secondary-subtle w-100 w-lg-auto">
           
-          <!-- Run Live Host Scan -->
-          <button id="btnLiveScan" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2 flex-grow-1 flex-lg-grow-0" aria-label="Run Live Host Scan">
+          <button id="btnLiveScan" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center gap-2 flex-grow-1 flex-lg-grow-0">
             <i class="bi bi-lightning-charge-fill"></i>
             <span>Run Host Scan</span>
           </button>
 
-          <!-- Simulate Adversary Scenarios -->
           <div class="dropdown flex-grow-1 flex-lg-grow-0">
-            <button id="btnSimulateDropdown" class="btn btn-sm btn-outline-secondary dropdown-toggle d-inline-flex align-items-center justify-content-between gap-2 w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <span class="d-inline-flex align-items-center gap-1">
-                <i class="bi bi-radioactive"></i>
-                <span>Simulate Attack</span>
-              </span>
+            <button id="btnSimulateDropdown" class="btn btn-sm btn-outline-secondary dropdown-toggle d-inline-flex align-items-center justify-content-center gap-2 w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-radioactive"></i>
+              <span>Simulate Attack</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-lg p-2 border-secondary-subtle" id="simMenu" style="min-width: 320px; max-width: calc(100vw - 24px);">
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg p-2 border-secondary-subtle" id="simMenu" style="width: min(340px, 92vw);">
               <li><h6 class="dropdown-header font-mono text-uppercase small text-secondary">Threat Simulation Scenarios</h6></li>
               <li>
                 <button class="dropdown-item rounded d-flex gap-2 p-2 align-items-start" onclick="triggerScenario('all_threats')">
                   <span class="badge text-bg-danger mt-1">Multi-Vector</span>
                   <div>
-                    <div class="fw-semibold text-white small">Complex Intrusions (All Vectors)</div>
-                    <div class="text-secondary" style="font-size: 0.75rem;">Simultaneous ransomware, C2 beacon, and shell</div>
+                    <div class="fw-semibold text-white small">Complex Intrusions (All Scenarios)</div>
+                    <div class="text-secondary small">Ransomware, covert C2, and interactive shell</div>
                   </div>
                 </button>
               </li>
@@ -88,7 +82,7 @@
                   <span class="badge text-bg-warning mt-1">APT-29</span>
                   <div>
                     <div class="fw-semibold text-white small">Covert C2 & Persistence</div>
-                    <div class="text-secondary" style="font-size: 0.75rem;">DNS/HTTPS beaconing via LaunchAgent</div>
+                    <div class="text-secondary small">DNS/HTTPS beaconing via background LaunchAgent</div>
                   </div>
                 </button>
               </li>
@@ -97,7 +91,7 @@
                   <span class="badge text-bg-danger mt-1">Ransomware</span>
                   <div>
                     <div class="fw-semibold text-white small">BlackCat Cryptor Burst</div>
-                    <div class="text-secondary" style="font-size: 0.75rem;">Mass file enumeration & encryption activity</div>
+                    <div class="text-secondary small">Mass file enumeration & encryption ops</div>
                   </div>
                 </button>
               </li>
@@ -106,7 +100,7 @@
                   <span class="badge text-bg-warning mt-1">Exploit</span>
                   <div>
                     <div class="fw-semibold text-white small">Interactive Reverse Shell</div>
-                    <div class="text-secondary" style="font-size: 0.75rem;">Remote bash/python PTY spawned on socket</div>
+                    <div class="text-secondary small">Remote bash/python PTY spawned on socket</div>
                   </div>
                 </button>
               </li>
@@ -114,8 +108,8 @@
                 <button class="dropdown-item rounded d-flex gap-2 p-2 align-items-start" onclick="triggerScenario('pegasus_spyware')">
                   <span class="badge text-bg-info mt-1">Spyware</span>
                   <div>
-                    <div class="fw-semibold text-white small">Sensor & Hook Surveillance</div>
-                    <div class="text-secondary" style="font-size: 0.75rem;">Microphone & screen recording taps</div>
+                    <div class="fw-semibold text-white small">Sensor & Hook Persistence</div>
+                    <div class="text-secondary small">Microphone & screen recording taps</div>
                   </div>
                 </button>
               </li>
@@ -125,15 +119,14 @@
                   <span class="badge text-bg-success mt-1">Baseline</span>
                   <div>
                     <div class="fw-semibold text-success small">Restore Benign Baseline</div>
-                    <div class="text-secondary" style="font-size: 0.75rem;">Clear synthetic events to 100% clean posture</div>
+                    <div class="text-secondary small">Reset synthetic threats to 100% clean health</div>
                   </div>
                 </button>
               </li>
             </ul>
           </div>
 
-          <!-- Emergency Contain All -->
-          <button id="btnEmergencyContain" class="btn btn-sm btn-danger d-inline-flex align-items-center gap-2 flex-grow-1 flex-lg-grow-0" onclick="containAllThreats()">
+          <button id="btnEmergencyContain" class="btn btn-sm btn-danger d-inline-flex align-items-center justify-content-center gap-2 flex-grow-1 flex-lg-grow-0" onclick="containAllThreats()">
             <i class="bi bi-shield-slash-fill"></i>
             <span>Contain All</span>
           </button>
@@ -142,137 +135,139 @@
     </div>
   </header>
 
-  <!-- HTML5 Main Content -->
-  <main class="container-fluid px-3 px-lg-4 py-3 flex-grow-1" role="main">
+  <!-- Main Container -->
+  <main class="container-fluid px-2 px-sm-3 px-lg-4 py-3 flex-grow-1 w-100 overflow-x-hidden" role="main">
     
-    <!-- Executive KPI Row -->
-    <section class="row g-2 g-md-3 mb-3" aria-label="Security Metrics and Posture">
-      <!-- KPI 1: Posture Gauge Card -->
-      <div class="col-12 col-md-6 col-xl-4">
+    <!-- Executive KPI Row: 100% Responsive Grid -->
+    <section class="row g-2 g-sm-3 mb-3 w-100 mx-0" aria-label="Security Metrics and Posture">
+      <!-- Posture Card -->
+      <div class="col-12 col-md-6 col-xl-4 px-1 px-sm-2">
         <div class="card h-100 shadow-sm border bg-surface-card">
-          <div class="card-body d-flex align-items-center gap-3 py-3">
-            <div class="position-relative" style="width: 58px; height: 58px; min-width: 58px;">
+          <div class="card-body d-flex align-items-center gap-3 py-2 py-sm-3 px-3">
+            <div class="position-relative" style="width: 52px; height: 52px; min-width: 52px;">
               <svg class="w-100 h-100" viewBox="0 0 100 100" style="transform: rotate(-90deg);" aria-hidden="true">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"></circle>
                 <circle id="scoreRingProgress" cx="50" cy="50" r="40" fill="none" stroke="#ef4444" stroke-width="8" stroke-dasharray="251.3" stroke-dashoffset="50" stroke-linecap="round" style="transition: stroke-dashoffset 0.6s ease;"></circle>
               </svg>
               <div class="position-absolute top-50 start-50 translate-middle text-center">
-                <span id="overallScoreVal" class="fw-bold fs-5 text-white font-heading">--</span>
+                <span id="overallScoreVal" class="fw-bold fs-6 fs-sm-5 text-white font-heading">--</span>
               </div>
             </div>
-            <div class="d-flex flex-column">
-              <span class="text-secondary small fw-medium">Cyber Posture Rating</span>
-              <span id="postureTierBadge" class="fw-bold fs-6 text-danger font-heading">ANALYZING...</span>
-              <span class="text-secondary opacity-75" style="font-size: 0.75rem;">Continuous host security score</span>
+            <div class="d-flex flex-column text-truncate">
+              <span class="text-secondary small fw-medium text-truncate">Cyber Posture Rating</span>
+              <span id="postureTierBadge" class="fw-bold fs-6 text-danger font-heading text-truncate">ANALYZING...</span>
+              <span class="text-secondary opacity-75 d-none d-sm-inline" style="font-size: 0.72rem;">Continuous host security score</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- KPI 2: Active Incidents -->
-      <div class="col-6 col-md-3 col-xl-2">
+      <!-- Active Incidents -->
+      <div class="col-6 col-md-3 col-xl-2 px-1 px-sm-2">
         <div class="card h-100 shadow-sm border bg-surface-card">
-          <div class="card-body py-3 d-flex flex-column justify-content-between">
+          <div class="card-body py-2 py-sm-3 px-2 px-sm-3 d-flex flex-column justify-content-between">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="text-secondary small fw-medium text-truncate">Incidents</span>
               <i class="bi bi-exclamation-triangle-fill text-danger small"></i>
             </div>
-            <div id="metricIncidentCount" class="fw-bold fs-3 text-danger my-1 font-heading">0</div>
-            <span class="text-secondary opacity-75" style="font-size: 0.72rem;">Correlated threats</span>
+            <div id="metricIncidentCount" class="fw-bold fs-4 fs-sm-3 text-danger my-1 font-heading">0</div>
+            <span class="text-secondary opacity-75 text-truncate" style="font-size: 0.7rem;">Active threats</span>
           </div>
         </div>
       </div>
 
-      <!-- KPI 3: Monitored Entities -->
-      <div class="col-6 col-md-3 col-xl-2">
+      <!-- Profiled Entities -->
+      <div class="col-6 col-md-3 col-xl-2 px-1 px-sm-2">
         <div class="card h-100 shadow-sm border bg-surface-card">
-          <div class="card-body py-3 d-flex flex-column justify-content-between">
+          <div class="card-body py-2 py-sm-3 px-2 px-sm-3 d-flex flex-column justify-content-between">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="text-secondary small fw-medium text-truncate">Entities</span>
               <i class="bi bi-hdd-network-fill text-primary small"></i>
             </div>
-            <div id="metricEntityCount" class="fw-bold fs-3 text-primary my-1 font-heading">0</div>
-            <span class="text-secondary opacity-75" style="font-size: 0.72rem;">Processes & sockets</span>
+            <div id="metricEntityCount" class="fw-bold fs-4 fs-sm-3 text-primary my-1 font-heading">0</div>
+            <span class="text-secondary opacity-75 text-truncate" style="font-size: 0.7rem;">Processes/Sockets</span>
           </div>
         </div>
       </div>
 
-      <!-- KPI 4: Telemetry Signals -->
-      <div class="col-6 col-md-6 col-xl-2">
+      <!-- Telemetry Signals -->
+      <div class="col-6 col-md-6 col-xl-2 px-1 px-sm-2">
         <div class="card h-100 shadow-sm border bg-surface-card">
-          <div class="card-body py-3 d-flex flex-column justify-content-between">
+          <div class="card-body py-2 py-sm-3 px-2 px-sm-3 d-flex flex-column justify-content-between">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="text-secondary small fw-medium text-truncate">Signals</span>
               <i class="bi bi-activity text-success small"></i>
             </div>
-            <div id="metricSignalCount" class="fw-bold fs-3 text-success my-1 font-heading">0</div>
-            <span class="text-secondary opacity-75" style="font-size: 0.72rem;">Atomic events</span>
+            <div id="metricSignalCount" class="fw-bold fs-4 fs-sm-3 text-success my-1 font-heading">0</div>
+            <span class="text-secondary opacity-75 text-truncate" style="font-size: 0.7rem;">Streaming events</span>
           </div>
         </div>
       </div>
 
-      <!-- KPI 5: SOAR Containments -->
-      <div class="col-6 col-md-6 col-xl-2">
+      <!-- SOAR Containments -->
+      <div class="col-6 col-md-6 col-xl-2 px-1 px-sm-2">
         <div class="card h-100 shadow-sm border bg-surface-card">
-          <div class="card-body py-3 d-flex flex-column justify-content-between">
+          <div class="card-body py-2 py-sm-3 px-2 px-sm-3 d-flex flex-column justify-content-between">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="text-secondary small fw-medium text-truncate">Containments</span>
               <i class="bi bi-shield-lock-fill text-warning small"></i>
             </div>
-            <div id="metricContainCount" class="fw-bold fs-3 text-warning my-1 font-heading">0</div>
-            <span class="text-secondary opacity-75" style="font-size: 0.72rem;">Active isolations</span>
+            <div id="metricContainCount" class="fw-bold fs-4 fs-sm-3 text-warning my-1 font-heading">0</div>
+            <span class="text-secondary opacity-75 text-truncate" style="font-size: 0.7rem;">Host isolations</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Navigation Tab Bar -->
-    <nav class="nav nav-pills border-bottom pb-2 mb-3 gap-2 overflow-x-auto flex-nowrap" role="tablist" aria-label="EDR Views">
-      <button class="nav-link active d-inline-flex align-items-center gap-2 py-2 px-3 fw-medium" data-tab="tab-graph" id="navTabGraph" type="button" role="tab" aria-selected="true">
-        <i class="bi bi-diagram-3"></i>
-        <span>Attack Graph</span>
-      </button>
+    <!-- Navigation Tabs with Horizontal Touch Scroll -->
+    <div class="nav-scroll-wrapper mb-3 border-bottom pb-2 w-100">
+      <nav class="nav nav-pills gap-2 flex-nowrap" role="tablist" aria-label="Views">
+        <button class="nav-link active d-inline-flex align-items-center gap-2 py-2 px-3 fw-medium text-nowrap" data-tab="tab-graph" id="navTabGraph" type="button" role="tab" aria-selected="true">
+          <i class="bi bi-diagram-3"></i>
+          <span>Attack Graph</span>
+        </button>
 
-      <button class="nav-link d-inline-flex align-items-center gap-2 py-2 px-3 fw-medium" data-tab="tab-incidents" id="navTabIncidents" type="button" role="tab" aria-selected="false">
-        <i class="bi bi-bell"></i>
-        <span>Incident Queue</span>
-        <span id="incidentBadgeCount" class="badge rounded-pill bg-danger text-white">0</span>
-      </button>
+        <button class="nav-link d-inline-flex align-items-center gap-2 py-2 px-3 fw-medium text-nowrap" data-tab="tab-incidents" id="navTabIncidents" type="button" role="tab" aria-selected="false">
+          <i class="bi bi-bell"></i>
+          <span>Incident Queue</span>
+          <span id="incidentBadgeCount" class="badge rounded-pill bg-danger text-white">0</span>
+        </button>
 
-      <button class="nav-link d-inline-flex align-items-center gap-2 py-2 px-3 fw-medium" data-tab="tab-mitre" id="navTabMitre" type="button" role="tab" aria-selected="false">
-        <i class="bi bi-grid-3x3-gap"></i>
-        <span>MITRE ATT&CK®</span>
-      </button>
+        <button class="nav-link d-inline-flex align-items-center gap-2 py-2 px-3 fw-medium text-nowrap" data-tab="tab-mitre" id="navTabMitre" type="button" role="tab" aria-selected="false">
+          <i class="bi bi-grid-3x3-gap"></i>
+          <span>MITRE ATT&CK®</span>
+        </button>
 
-      <button class="nav-link d-inline-flex align-items-center gap-2 py-2 px-3 fw-medium" data-tab="tab-audit" id="navTabAudit" type="button" role="tab" aria-selected="false">
-        <i class="bi bi-journal-text"></i>
-        <span>Compliance Ledger</span>
-      </button>
-    </nav>
+        <button class="nav-link d-inline-flex align-items-center gap-2 py-2 px-3 fw-medium text-nowrap" data-tab="tab-audit" id="navTabAudit" type="button" role="tab" aria-selected="false">
+          <i class="bi bi-journal-text"></i>
+          <span>Audit Ledger</span>
+        </button>
+      </nav>
+    </div>
 
     <!-- TAB 1: ATTACK GRAPH & FORENSIC DRAWER -->
-    <section id="tab-graph" class="tab-pane active" role="tabpanel" aria-labelledby="navTabGraph">
-      <div class="row g-3">
+    <section id="tab-graph" class="tab-pane active w-100" role="tabpanel" aria-labelledby="navTabGraph">
+      <div class="row g-2 g-md-3 w-100 mx-0">
         <!-- Interactive Graph Canvas Card -->
-        <div class="col-12 col-lg-8 col-xl-9">
-          <div class="card shadow-sm border bg-surface-card h-100">
+        <div class="col-12 col-lg-8 col-xl-9 px-0 px-md-2">
+          <div class="card shadow-sm border bg-surface-card h-100 w-100 overflow-hidden">
             <div class="card-header bg-dark-subtle border-bottom d-flex justify-content-between align-items-center py-2 px-3 flex-wrap gap-2">
               
-              <!-- Legend Pills -->
-              <div class="d-flex align-items-center gap-2 overflow-x-auto">
-                <span class="badge text-bg-danger-subtle text-danger border border-danger-subtle font-mono">Critical</span>
-                <span class="badge text-bg-warning-subtle text-warning border border-warning-subtle font-mono">High</span>
-                <span class="badge text-bg-info-subtle text-info border border-info-subtle font-mono">Medium</span>
-                <span class="badge text-bg-success-subtle text-success border border-success-subtle font-mono">Benign</span>
+              <!-- Legend Badges -->
+              <div class="d-flex align-items-center gap-1 gap-sm-2 flex-wrap">
+                <span class="badge text-bg-danger-subtle text-danger border border-danger-subtle font-mono small">Critical</span>
+                <span class="badge text-bg-warning-subtle text-warning border border-warning-subtle font-mono small">High</span>
+                <span class="badge text-bg-info-subtle text-info border border-info-subtle font-mono small">Medium</span>
+                <span class="badge text-bg-success-subtle text-success border border-success-subtle font-mono small">Benign</span>
               </div>
 
-              <!-- Canvas Controls -->
-              <div class="d-flex gap-2">
+              <!-- Canvas Action Controls -->
+              <div class="d-flex gap-1 gap-sm-2">
                 <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" onclick="resetGraphPhysics()" title="Stabilize layout physics">
                   <i class="bi bi-arrow-repeat"></i>
                   <span class="d-none d-sm-inline">Stabilize</span>
                 </button>
-                <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" onclick="fitGraphView()" title="Fit all nodes to view">
+                <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" onclick="fitGraphView()" title="Fit all nodes in view">
                   <i class="bi bi-arrows-fullscreen"></i>
                   <span class="d-none d-sm-inline">Fit View</span>
                 </button>
@@ -284,12 +279,12 @@
               </div>
             </div>
 
-            <!-- Vis.js Viewport -->
-            <div class="card-body p-0 position-relative graph-card-body">
-              <div id="visNetworkContainer" class="w-100 h-100 graph-canvas-container"></div>
+            <!-- Vis.js Viewport (Responsive Height & Zero-Overflow) -->
+            <div class="card-body p-0 position-relative graph-viewport-wrapper w-100">
+              <div id="visNetworkContainer" class="w-100 h-100"></div>
               
-              <!-- Mobile Floating Zoom Bar -->
-              <div class="position-absolute bottom-0 end-0 m-3 d-flex flex-column gap-1 bg-dark-subtle p-1 rounded border shadow-sm z-2">
+              <!-- Floating Zoom Bar -->
+              <div class="position-absolute bottom-0 end-0 m-2 m-sm-3 d-flex flex-column gap-1 bg-dark-subtle p-1 rounded border shadow-sm z-2">
                 <button class="btn btn-sm btn-dark p-1 px-2 border-0" onclick="zoomGraph(1.2)" title="Zoom In">
                   <i class="bi bi-plus-lg"></i>
                 </button>
@@ -305,8 +300,8 @@
         </div>
 
         <!-- Forensic Entity Inspector (Responsive Offcanvas for Mobile, Side Card for Desktop) -->
-        <aside class="col-12 col-lg-4 col-xl-3">
-          <div class="offcanvas-lg offcanvas-end bg-surface-card card border shadow-sm h-100" tabindex="-1" id="nodeInspector" aria-labelledby="nodeInspectorLabel">
+        <aside class="col-12 col-lg-4 col-xl-3 px-0 px-md-2 mt-2 mt-lg-0">
+          <div class="offcanvas-lg offcanvas-end bg-surface-card card border shadow-sm h-100 w-100" tabindex="-1" id="nodeInspector" aria-labelledby="nodeInspectorLabel">
             <div class="offcanvas-header card-header bg-dark-subtle border-bottom d-flex justify-content-between align-items-center py-2 px-3">
               <div class="d-flex align-items-center gap-2">
                 <span class="fw-bold small text-white font-heading" id="nodeInspectorLabel">Entity Inspector</span>
@@ -320,8 +315,8 @@
               </div>
             </div>
             
-            <div id="inspectorContent" class="offcanvas-body card-body p-3 overflow-y-auto inspector-scroll-body">
-              <div class="text-center py-5 text-secondary">
+            <div id="inspectorContent" class="offcanvas-body card-body p-3 overflow-y-auto inspector-scroll-body w-100">
+              <div class="text-center py-4 py-sm-5 text-secondary">
                 <i class="bi bi-search fs-2 mb-2 d-block opacity-50"></i>
                 <h6 class="fw-semibold text-white mb-1">No Entity Selected</h6>
                 <p class="small opacity-75 m-0">Click any process, socket, or persistence node in the attack graph to inspect telemetry details.</p>
@@ -333,17 +328,17 @@
     </section>
 
     <!-- TAB 2: INCIDENT QUEUE -->
-    <section id="tab-incidents" class="tab-pane" role="tabpanel" aria-labelledby="navTabIncidents">
+    <section id="tab-incidents" class="tab-pane w-100" role="tabpanel" aria-labelledby="navTabIncidents">
       <!-- Search & Filter Controls -->
-      <div class="card bg-surface-card border mb-3 p-3 shadow-sm">
-        <div class="row g-2 align-items-center">
-          <div class="col-12 col-md-5 col-lg-4">
+      <div class="card bg-surface-card border mb-3 p-2 p-sm-3 shadow-sm w-100">
+        <div class="row g-2 align-items-center w-100 mx-0">
+          <div class="col-12 col-md-5 col-lg-4 px-0 px-sm-1">
             <div class="input-group input-group-sm">
               <span class="input-group-text bg-body-secondary border-secondary-subtle text-secondary"><i class="bi bi-search"></i></span>
-              <input type="search" id="incidentSearchInput" class="form-control bg-body-secondary border-secondary-subtle text-white" placeholder="Search by entity, PID, technique..." aria-label="Filter incidents">
+              <input type="search" id="incidentSearchInput" class="form-control bg-body-secondary border-secondary-subtle text-white" placeholder="Search entity, PID, technique..." aria-label="Filter incidents">
             </div>
           </div>
-          <div class="col-12 col-md-7 col-lg-8 d-flex gap-1 overflow-x-auto pb-1 pb-md-0">
+          <div class="col-12 col-md-7 col-lg-8 px-0 px-sm-1 d-flex gap-1 overflow-x-auto pb-1 pb-md-0">
             <button class="btn btn-sm btn-outline-secondary active filter-pill" data-filter="all">All (<span id="filterCountAll">0</span>)</button>
             <button class="btn btn-sm btn-outline-danger filter-pill" data-filter="critical">Critical (<span id="filterCountCritical">0</span>)</button>
             <button class="btn btn-sm btn-outline-warning filter-pill" data-filter="high">High (<span id="filterCountHigh">0</span>)</button>
@@ -354,39 +349,39 @@
       </div>
 
       <!-- Incidents Container -->
-      <div class="d-flex flex-column gap-3" id="incidentsList">
+      <div class="d-flex flex-column gap-3 w-100" id="incidentsList">
         <!-- Rendered dynamically via JS -->
       </div>
     </section>
 
     <!-- TAB 3: MITRE ATT&CK MATRIX -->
-    <section id="tab-mitre" class="tab-pane" role="tabpanel" aria-labelledby="navTabMitre">
-      <div class="card bg-surface-card border mb-3 shadow-sm">
+    <section id="tab-mitre" class="tab-pane w-100" role="tabpanel" aria-labelledby="navTabMitre">
+      <div class="card bg-surface-card border mb-3 shadow-sm w-100">
         <div class="card-body py-3">
           <div class="badge text-bg-primary-subtle text-primary border border-primary-subtle font-mono text-uppercase mb-1" style="font-size: 0.7rem;">MITRE Enterprise Alignment</div>
           <h5 class="fw-bold text-white mb-1 font-heading">Enterprise MITRE ATT&CK® Correlation</h5>
           <p class="text-secondary small mb-0">Real-time correlation of detected behavioral telemetry mapped against global adversary Tactics and Techniques.</p>
         </div>
       </div>
-      <div class="row g-3" id="mitreGrid">
+      <div class="row g-2 g-sm-3 w-100 mx-0" id="mitreGrid">
         <!-- Rendered dynamically via JS -->
       </div>
     </section>
 
     <!-- TAB 4: AUDIT & COMPLIANCE LOG -->
-    <section id="tab-audit" class="tab-pane" role="tabpanel" aria-labelledby="navTabAudit">
-      <div class="card bg-surface-card border shadow-sm">
-        <div class="card-header bg-dark-subtle border-bottom d-flex justify-content-between align-items-center py-3 px-3">
+    <section id="tab-audit" class="tab-pane w-100" role="tabpanel" aria-labelledby="navTabAudit">
+      <div class="card bg-surface-card border shadow-sm w-100">
+        <div class="card-header bg-dark-subtle border-bottom d-flex justify-content-between align-items-center py-2 py-sm-3 px-3">
           <div>
             <h6 class="fw-bold text-white mb-0 font-heading">SOAR Remediation & Compliance Ledger</h6>
             <span class="text-secondary small">Immutable compliance record of automated defense responses</span>
           </div>
           <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" onclick="loadAuditLogs()">
             <i class="bi bi-arrow-clockwise"></i>
-            <span>Refresh Ledger</span>
+            <span class="d-none d-sm-inline">Refresh</span>
           </button>
         </div>
-        <div class="card-body p-3 font-mono overflow-y-auto audit-ledger-body">
+        <div class="card-body p-2 p-sm-3 font-mono overflow-y-auto audit-ledger-body w-100">
           <div class="d-flex flex-column gap-2" id="auditOutput">
             <div class="text-secondary small">// Initializing Aegis-X forensic audit stream...</div>
           </div>
