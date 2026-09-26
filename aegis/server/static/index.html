@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>AEGIS-X // Autonomous EDR & Cyber Defense SOC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,40 +14,42 @@
 <body class="cyber-theme">
   <!-- Top Command Header -->
   <header class="soc-header">
-    <div class="brand-zone">
-      <div class="logo-radar">
-        <div class="radar-sweep"></div>
-        <span class="shield-glyph">🛡️</span>
+    <div class="header-top-row">
+      <div class="brand-zone">
+        <div class="logo-radar">
+          <div class="radar-sweep"></div>
+          <span class="shield-glyph">🛡️</span>
+        </div>
+        <div class="brand-meta">
+          <div class="brand-title">AEGIS<span class="accent-x">-X</span></div>
+          <div class="brand-sub">AUTONOMOUS EDR & SOC PLATFORM</div>
+        </div>
       </div>
-      <div>
-        <div class="brand-title">AEGIS<span class="accent-x">-X</span></div>
-        <div class="brand-sub">AUTONOMOUS ENDPOINT DETECTION & CORRELATION PLATFORM</div>
-      </div>
-    </div>
 
-    <!-- Live Status Dial -->
-    <div class="header-posture">
-      <div class="score-circle-wrap">
-        <svg class="score-ring" viewBox="0 0 100 100">
-          <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
-          <circle id="scoreRingProgress" class="ring-val" cx="50" cy="50" r="42"></circle>
-        </svg>
-        <div class="score-value" id="overallScoreVal">--</div>
-      </div>
-      <div class="posture-info">
-        <div class="posture-label">CYBER POSTURE RATING</div>
-        <div id="postureTierBadge" class="posture-badge">SCANNING...</div>
+      <!-- Live Status Dial -->
+      <div class="header-posture">
+        <div class="score-circle-wrap">
+          <svg class="score-ring" viewBox="0 0 100 100">
+            <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+            <circle id="scoreRingProgress" class="ring-val" cx="50" cy="50" r="42"></circle>
+          </svg>
+          <div class="score-value" id="overallScoreVal">--</div>
+        </div>
+        <div class="posture-info">
+          <div class="posture-label">CYBER POSTURE</div>
+          <div id="postureTierBadge" class="posture-badge">SCANNING...</div>
+        </div>
       </div>
     </div>
 
     <!-- Quick Action Controls -->
     <div class="header-controls">
       <button id="btnLiveScan" class="cyber-btn primary">
-        <span class="btn-icon">⚡</span> RUN LIVE OS SCAN
+        <span class="btn-icon">⚡</span> <span class="btn-text">RUN SCAN</span>
       </button>
       <div class="dropdown">
         <button id="btnSimulateDropdown" class="cyber-btn secondary">
-          <span class="btn-icon">☣️</span> SIMULATE ADVERSARY ▾
+          <span class="btn-icon">☣️</span> <span class="btn-text">SIMULATE ADVERSARY</span> ▾
         </button>
         <div class="dropdown-menu" id="simMenu">
           <div class="dropdown-item" onclick="triggerScenario('all_threats')">🔴 Multi-Vector Attack (All Threats)</div>
@@ -60,7 +62,7 @@
         </div>
       </div>
       <button id="btnEmergencyContain" class="cyber-btn danger" onclick="containAllThreats()">
-        <span class="btn-icon">🚨</span> CONTAIN ALL THREATS
+        <span class="btn-icon">🚨</span> <span class="btn-text">CONTAIN ALL</span>
       </button>
     </div>
   </header>
@@ -90,20 +92,22 @@
   </section>
 
   <!-- Main Navigation Tabs -->
-  <nav class="soc-nav">
-    <button class="nav-tab active" data-tab="tab-graph" id="navTabGraph">
-      <span class="tab-icon">🕸️</span> ATTACK GRAPH & LINEAGE
-    </button>
-    <button class="nav-tab" data-tab="tab-incidents" id="navTabIncidents">
-      <span class="tab-icon">🚨</span> INCIDENT QUEUE <span id="incidentBadgeCount" class="counter-badge">0</span>
-    </button>
-    <button class="nav-tab" data-tab="tab-mitre" id="navTabMitre">
-      <span class="tab-icon">🎯</span> MITRE ATT&CK® MATRIX
-    </button>
-    <button class="nav-tab" data-tab="tab-audit" id="navTabAudit">
-      <span class="tab-icon">📜</span> FORENSIC AUDIT TRAIL
-    </button>
-  </nav>
+  <div class="soc-nav-wrapper">
+    <nav class="soc-nav">
+      <button class="nav-tab active" data-tab="tab-graph" id="navTabGraph">
+        <span class="tab-icon">🕸️</span> <span class="tab-label">ATTACK GRAPH</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-incidents" id="navTabIncidents">
+        <span class="tab-icon">🚨</span> <span class="tab-label">INCIDENT QUEUE</span> <span id="incidentBadgeCount" class="counter-badge">0</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-mitre" id="navTabMitre">
+        <span class="tab-icon">🎯</span> <span class="tab-label">MITRE ATT&CK®</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-audit" id="navTabAudit">
+        <span class="tab-icon">📜</span> <span class="tab-label">AUDIT TRAIL</span>
+      </button>
+    </nav>
+  </div>
 
   <!-- Tab Content Sections -->
   <main class="soc-body">
@@ -112,15 +116,17 @@
       <div class="graph-layout">
         <div class="graph-viewport-box">
           <div class="graph-toolbar">
-            <div class="legend-items">
-              <span class="legend-tag critical">CRITICAL / EXPLOIT</span>
-              <span class="legend-tag high">HIGH RISK</span>
-              <span class="legend-tag medium">MEDIUM ATTENTION</span>
-              <span class="legend-tag benign">BENIGN / VERIFIED</span>
+            <div class="legend-scroll-wrap">
+              <div class="legend-items">
+                <span class="legend-tag critical">CRITICAL</span>
+                <span class="legend-tag high">HIGH RISK</span>
+                <span class="legend-tag medium">MEDIUM</span>
+                <span class="legend-tag benign">BENIGN</span>
+              </div>
             </div>
             <div class="graph-actions">
-              <button class="btn-micro" onclick="resetGraphPhysics()">Stabilize Layout</button>
-              <button class="btn-micro" onclick="fitGraphView()">Fit View</button>
+              <button class="btn-micro" onclick="resetGraphPhysics()" title="Stabilize physics simulation">Stabilize</button>
+              <button class="btn-micro" onclick="fitGraphView()" title="Fit all nodes to view">Fit View</button>
             </div>
           </div>
           <div id="visNetworkContainer" class="vis-container"></div>
@@ -129,8 +135,11 @@
         <!-- Sidebar Node Forensic Inspector -->
         <aside class="node-inspector" id="nodeInspector">
           <div class="inspector-header">
-            <span class="inspector-title">FORENSIC ENTITY INSPECTOR</span>
-            <span class="pulse-indicator">LIVE</span>
+            <div class="inspector-header-left">
+              <span class="inspector-title">FORENSIC ENTITY INSPECTOR</span>
+              <span class="pulse-indicator">LIVE</span>
+            </div>
+            <button class="btn-micro inspector-close-btn" onclick="clearInspector()" title="Clear Selection">✕ Clear</button>
           </div>
           <div id="inspectorContent" class="inspector-body">
             <div class="empty-hint">Select any node in the Attack Graph to inspect live process lineage, socket bindings, and raw telemetry signals.</div>

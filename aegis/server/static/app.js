@@ -15,6 +15,16 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btnLiveScan").addEventListener("click", () => {
     runScan("live");
   });
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (networkInstance) {
+        networkInstance.fit();
+      }
+    }, 250);
+  });
 });
 
 // Tab Switcher
@@ -285,6 +295,12 @@ function inspectNode(nodeKey) {
   }
 
   inspector.innerHTML = html;
+  if (window.innerWidth <= 1024) {
+    const inspectorElem = document.getElementById("nodeInspector");
+    if (inspectorElem) {
+      inspectorElem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
 }
 
 function clearInspector() {
